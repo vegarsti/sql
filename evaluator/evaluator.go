@@ -104,7 +104,7 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
-		return &object.Integer{Value: leftVal / rightVal}
+		return &object.Float{Value: float64(leftVal) / float64(rightVal)}
 	default:
 		panic("unreachable; should have been caught by check in outer function")
 	}

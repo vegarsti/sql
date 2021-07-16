@@ -25,11 +25,11 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"5 * 2 + 10", 20},
 		{"5 + 2 * 10", 25},
 		{"20 + 2 * -10", 0},
-		{"50 / 2 * 2 + 10", 60},
+		{"50 + 2 * 2 + 10", 64},
 		{"2 * (5 + 10)", 30},
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
-		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+		{"(5 + 10 * 2 + 15 * 3) * 2 + -10", 130},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -67,6 +67,8 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"0.", 0},
 		{"1 * 3.14", 3.14},
 		{"3.14 * 1", 3.14},
+		{"1 / 2", 0.5},
+		{"1 / 1", 1},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -77,7 +79,7 @@ func TestEvalFloatExpression(t *testing.T) {
 func testFloatObject(t *testing.T, obj object.Object, expected float64) bool {
 	result, ok := obj.(*object.Float)
 	if !ok {
-		t.Errorf("object is not Integer. got=%T (%+v)", obj, obj)
+		t.Errorf("object is not Float. got=%T (%+v)", obj, obj)
 		return false
 	}
 	if result.Value != expected {
