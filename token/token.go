@@ -12,8 +12,9 @@ const (
 	EOF     = "EOF"
 
 	// Literals
-	INT   = "INT"
-	FLOAT = "FLOAT"
+	INT    = "INT"
+	FLOAT  = "FLOAT"
+	STRING = "STRING"
 
 	// Operators
 	PLUS     = "+"
@@ -25,4 +26,5 @@ const (
 	LPAREN = "("
 	RPAREN = ")"
 	DOT    = "."
+	QUOTE  = "'"
 )
