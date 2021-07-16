@@ -45,12 +45,14 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
+	case []byte("'")[0]:
+		tok := l.readString()
+		return tok
 	case 0:
-		tok.Literal = ""
-		tok.Type = token.EOF
+		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:
 		if isDigit(l.ch) {
-			tok := l.readNumber()
+			tok = l.readNumber()
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
@@ -93,7 +95,38 @@ func isDigit(ch byte) bool {
 }
 
 func isDot(ch byte) bool {
-	return '.' == ch
+	return ch == '.'
+}
+
+func isQuote(ch byte) bool {
+	return string(ch) == "'"
+}
+
+func isEOF(ch byte) bool {
+	return ch == 0
+}
+
+func (l *Lexer) readString() token.Token {
+	l.readChar() // read first quote character
+	// read until string is terminated or EOF is reached (which is an error)
+	position := l.position
+	for {
+		// reached second quote character; break
+		if isQuote(l.ch) {
+			break
+		}
+		// if an EOF is reached before, it's an error
+		if isEOF(l.ch) {
+			return token.Token{Type: token.EOF, Literal: ""}
+		}
+		l.readChar()
+	}
+	literal := l.input[position:l.position]
+	l.readChar() // read second quote character
+	return token.Token{
+		Type:    token.STRING,
+		Literal: literal,
+	}
 }
 
 func (l *Lexer) skipWhitespace() {
