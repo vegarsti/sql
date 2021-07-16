@@ -65,6 +65,7 @@ func TestEvalStringExpression(t *testing.T) {
 		{"'abc'", "abc"},
 		{"'def'", "def"},
 		{`'a string with spaces and "quotes"'`, `a string with spaces and "quotes"`},
+		{"'🤩'", "🤩"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
