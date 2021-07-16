@@ -9,6 +9,7 @@ type ObjectType string
 const (
 	INTEGER_OBJ = "INTEGER"
 	FLOAT_OBJ   = "FLOAT"
+	STRING_OBJ  = "STRING"
 	ERROR_OBJ   = "ERROR"
 )
 
@@ -30,6 +31,13 @@ type Float struct {
 
 func (f *Float) Inspect() string  { return fmt.Sprintf("%f", f.Value) }
 func (f *Float) Type() ObjectType { return FLOAT_OBJ }
+
+type String struct {
+	Value string
+}
+
+func (s *String) Inspect() string  { return s.Value }
+func (s *String) Type() ObjectType { return STRING_OBJ }
 
 type Error struct {
 	Message string

@@ -33,6 +33,8 @@ func Eval(node ast.Node) object.Object {
 		return &object.Integer{Value: node.Value}
 	case *ast.FloatLiteral:
 		return &object.Float{Value: node.Value}
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	default:
 		return newError("unknown node type %T", node)
 	}
