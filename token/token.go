@@ -12,9 +12,10 @@ const (
 	EOF     = "EOF"
 
 	// Literals
-	INT    = "INT"
-	FLOAT  = "FLOAT"
-	STRING = "STRING"
+	INT        = "INT"
+	FLOAT      = "FLOAT"
+	STRING     = "STRING"
+	IDENTIFIER = "IDENTIFIER"
 
 	// Operators
 	PLUS     = "+"
