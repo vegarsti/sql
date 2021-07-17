@@ -23,6 +23,9 @@ const (
 	ASTERISK = "*"
 	SLASH    = "/"
 
+	// Statements
+	SELECT = "SELECT"
+
 	// Delimiters
 	LPAREN = "("
 	RPAREN = ")"
