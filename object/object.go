@@ -7,11 +7,10 @@ import (
 type ObjectType string
 
 const (
-	INTEGER_OBJ    = "INTEGER"
-	FLOAT_OBJ      = "FLOAT"
-	STRING_OBJ     = "STRING"
-	IDENTIFIER_OBJ = "IDENTIFIER"
-	ERROR_OBJ      = "ERROR"
+	INTEGER_OBJ = "INTEGER"
+	FLOAT_OBJ   = "FLOAT"
+	STRING_OBJ  = "STRING"
+	ERROR_OBJ   = "ERROR"
 )
 
 type Object interface {
@@ -39,13 +38,6 @@ type String struct {
 
 func (s *String) Inspect() string  { return s.Value }
 func (s *String) Type() ObjectType { return STRING_OBJ }
-
-type Identifier struct {
-	Value string
-}
-
-func (i *Identifier) Inspect() string  { return i.Value }
-func (i *Identifier) Type() ObjectType { return IDENTIFIER_OBJ }
 
 type Error struct {
 	Message string

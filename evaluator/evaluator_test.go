@@ -131,19 +131,6 @@ func TestEvalIdentifierExpression(t *testing.T) {
 	}
 }
 
-func testIdentifierObject(t *testing.T, obj object.Object, expected string) bool {
-	result, ok := obj.(*object.Identifier)
-	if !ok {
-		t.Errorf("object is not Identifier. got=%T (%+v)", obj, obj)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%s, want=%s", result.Value, expected)
-		return false
-	}
-	return true
-}
-
 func testError(t *testing.T, obj object.Object, expectedMessage string) bool {
 	result, ok := obj.(*object.Error)
 	if !ok {
