@@ -26,6 +26,8 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+func (es *ExpressionStatement) statementNode()       {}
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
 		return es.Expression.String()
@@ -33,8 +35,16 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
-func (es *ExpressionStatement) statementNode()       {}
-func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+type SelectExpression struct {
+	Token      token.Token // The 'SELECT' token
+	Expression Expression
+}
+
+func (ss *SelectExpression) expressionNode()      {}
+func (ss *SelectExpression) TokenLiteral() string { return ss.Token.Literal }
+func (ss *SelectExpression) String() string {
+	return "SELECT " + ss.Expression.String()
+}
 
 type Program struct {
 	Statements []Statement
