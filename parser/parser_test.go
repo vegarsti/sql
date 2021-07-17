@@ -297,3 +297,35 @@ func TestIdentifierLiteralExpression(t *testing.T) {
 	}
 	checkParserErrors(t, p)
 }
+
+func TestSelectExpression(t *testing.T) {
+	input := "select 5"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.SelectExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.SelectExpression. got=%T", stmt.Expression)
+	}
+	if exp.TokenLiteral() != "SELECT" {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", "SELECT", exp.TokenLiteral())
+	}
+	if !testIntegerLiteral(t, exp.Expression, 5) {
+		return
+	}
+	checkParserErrors(t, p)
+}
