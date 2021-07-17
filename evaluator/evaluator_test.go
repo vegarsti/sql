@@ -143,3 +143,16 @@ func testError(t *testing.T, obj object.Object, expectedMessage string) bool {
 	}
 	return true
 }
+
+func TestEvalSelectExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"select 1", 1},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
