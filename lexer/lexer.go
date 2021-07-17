@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"strings"
+
 	"github.com/vegarsti/sql/token"
 )
 
@@ -57,6 +59,9 @@ func (l *Lexer) NextToken() token.Token {
 		}
 		if isLetter(l.ch) {
 			tok = l.readIdentifier()
+			if strings.ToUpper(tok.Literal) == token.SELECT {
+				return token.Token{Type: token.SELECT, Literal: token.SELECT}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
