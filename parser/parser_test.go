@@ -261,8 +261,39 @@ func TestStringLiteralExpression(t *testing.T) {
 	if !ok {
 		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expression)
 	}
-	if literal.TokenLiteral() != "abc" {
-		t.Errorf("literal.TokenLiteral not %s. got=%s", "5", literal.TokenLiteral())
+	expectedLiteral := "abc"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	}
+	checkParserErrors(t, p)
+}
+
+func TestIdentifierLiteralExpression(t *testing.T) {
+	input := "foo"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	literal, ok := stmt.Expression.(*ast.IdentifierLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IdentifierLiteral. got=%T", stmt.Expression)
+	}
+	expectedLiteral := "foo"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
 	}
 	checkParserErrors(t, p)
 }
