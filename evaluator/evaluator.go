@@ -50,6 +50,9 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	var result object.Object
 	for _, statement := range stmts {
 		result = Eval(statement)
+		if isError(result) {
+			return result
+		}
 	}
 	return result
 }
