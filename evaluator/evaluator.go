@@ -35,6 +35,12 @@ func Eval(node ast.Node) object.Object {
 		return &object.Float{Value: node.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
+	case *ast.IdentifierLiteral:
+		environment := map[string]object.Object{}
+		if value, ok := environment[node.Value]; ok {
+			return value
+		}
+		return newError("no such column: %s", node.Value)
 	default:
 		return newError("unknown node type %T", node)
 	}
