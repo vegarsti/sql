@@ -79,6 +79,10 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
+	if p.curTokenIs(token.EOF) {
+		p.errors = append(p.errors, "expected operand")
+		return nil
+	}
 	expression.Right = p.parseExpression(precedence)
 	return expression
 }
