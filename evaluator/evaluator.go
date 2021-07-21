@@ -35,7 +35,7 @@ func Eval(node ast.Node) object.Object {
 		return &object.Float{Value: node.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
-	case *ast.IdentifierLiteral:
+	case *ast.Identifier:
 		environment := map[string]object.Object{}
 		if value, ok := environment[node.Value]; ok {
 			return value

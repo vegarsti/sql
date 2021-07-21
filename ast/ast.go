@@ -83,14 +83,14 @@ func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return sl.Token.Literal }
 
-type IdentifierLiteral struct {
+type Identifier struct {
 	Token token.Token
 	Value string
 }
 
-func (il *IdentifierLiteral) expressionNode()      {}
-func (il *IdentifierLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IdentifierLiteral) String() string       { return il.Token.Literal }
+func (il *Identifier) expressionNode()      {}
+func (il *Identifier) TokenLiteral() string { return il.Token.Literal }
+func (il *Identifier) String() string       { return il.Token.Literal }
 
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, e.g. -

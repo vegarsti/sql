@@ -268,7 +268,7 @@ func TestStringLiteralExpression(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
-func TestIdentifierLiteralExpression(t *testing.T) {
+func TestIdentifierExpression(t *testing.T) {
 	input := "select foo"
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -287,9 +287,9 @@ func TestIdentifierLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	literal, ok := stmt.Expression.(*ast.IdentifierLiteral)
+	literal, ok := stmt.Expression.(*ast.Identifier)
 	if !ok {
-		t.Fatalf("exp not *ast.IdentifierLiteral. got=%T", stmt.Expression)
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expression)
 	}
 	expectedLiteral := "foo"
 	if literal.TokenLiteral() != expectedLiteral {
