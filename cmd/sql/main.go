@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/user"
 
 	"github.com/vegarsti/sql/evaluator"
 	"github.com/vegarsti/sql/lexer"
@@ -49,10 +48,5 @@ func printParserErrors(out io.Writer, errors []string) {
 }
 
 func main() {
-	user, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Hello %s! This is a SQL shell!\n", user.Username)
 	Start(os.Stdin, os.Stdout)
 }
