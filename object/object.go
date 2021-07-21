@@ -29,7 +29,7 @@ func (r *Row) Inspect() string {
 	for i, v := range r.Values {
 		values[i] = v.Inspect()
 	}
-	return strings.Join(values, ", ")
+	return strings.Join(values, "\t")
 }
 func (r *Row) Type() ObjectType { return ROW_OBJ }
 
