@@ -14,22 +14,22 @@ func TestEvalIntegerExpression(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"5", 5},
-		{"10", 10},
-		{"6497869", 6497869},
-		{"-5", -5},
-		{"-10", -10},
-		{"5 + 5 + 5 + 5 - 10", 10},
-		{"2 * 2 * 2 * 2 * 2", 32},
-		{"-50 + 100 + -50", 0},
-		{"5 * 2 + 10", 20},
-		{"5 + 2 * 10", 25},
-		{"20 + 2 * -10", 0},
-		{"50 + 2 * 2 + 10", 64},
-		{"2 * (5 + 10)", 30},
-		{"3 * 3 * 3 + 10", 37},
-		{"3 * (3 * 3) + 10", 37},
-		{"(5 + 10 * 2 + 15 * 3) * 2 + -10", 130},
+		{"select 5", 5},
+		{"select 10", 10},
+		{"select 6497869", 6497869},
+		{"select -5", -5},
+		{"select -10", -10},
+		{"select 5 + 5 + 5 + 5 - 10", 10},
+		{"select 2 * 2 * 2 * 2 * 2", 32},
+		{"select -50 + 100 + -50", 0},
+		{"select 5 * 2 + 10", 20},
+		{"select 5 + 2 * 10", 25},
+		{"select 20 + 2 * -10", 0},
+		{"select 50 + 2 * 2 + 10", 64},
+		{"select 2 * (5 + 10)", 30},
+		{"select 3 * 3 * 3 + 10", 37},
+		{"select 3 * (3 * 3) + 10", 37},
+		{"select (5 + 10 * 2 + 15 * 3) * 2 + -10", 130},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -62,13 +62,13 @@ func TestEvalFloatExpression(t *testing.T) {
 		input    string
 		expected float64
 	}{
-		{"5.1", 5.1},
-		{"3.14", 3.14},
-		{"0.", 0},
-		{"1 * 3.14", 3.14},
-		{"3.14 * 1", 3.14},
-		{"1 / 2", 0.5},
-		{"1 / 1", 1},
+		{"select 5.1", 5.1},
+		{"select 3.14", 3.14},
+		{"select 0.", 0},
+		{"select 1 * 3.14", 3.14},
+		{"select 3.14 * 1", 3.14},
+		{"select 1 / 2", 0.5},
+		{"select 1 / 1", 1},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -94,10 +94,10 @@ func TestEvalStringExpression(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"'abc'", "abc"},
-		{"'def'", "def"},
-		{`'a string with spaces and "quotes"'`, `a string with spaces and "quotes"`},
-		{"'🤩'", "🤩"},
+		{"select 'abc'", "abc"},
+		{"select 'def'", "def"},
+		{`select 'a string with spaces and "quotes"'`, `a string with spaces and "quotes"`},
+		{"select '🤩'", "🤩"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -123,7 +123,7 @@ func TestEvalIdentifierExpression(t *testing.T) {
 		input                string
 		expectedErrorMessage string
 	}{
-		{"foo", "no such column: foo"},
+		{"select foo", "no such column: foo"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)

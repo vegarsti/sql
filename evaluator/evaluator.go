@@ -13,7 +13,7 @@ func Eval(node ast.Node) object.Object {
 		return evalStatements(node.Statements)
 	case *ast.SelectExpression:
 		return evalSelectExpression(node)
-	case *ast.ExpressionStatement:
+	case *ast.SelectStatement:
 		return Eval(node.Expression)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
