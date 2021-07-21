@@ -21,16 +21,16 @@ type Expression interface {
 	expressionNode()
 }
 
-type ExpressionStatement struct {
-	Token      token.Token // the first token of the expression
+type SelectStatement struct {
+	Token      token.Token // the SELECT token
 	Expression Expression
 }
 
-func (es *ExpressionStatement) statementNode()       {}
-func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
-func (es *ExpressionStatement) String() string {
+func (es *SelectStatement) statementNode()       {}
+func (es *SelectStatement) TokenLiteral() string { return es.Token.Literal }
+func (es *SelectStatement) String() string {
 	if es.Expression != nil {
-		return es.Expression.String()
+		return es.TokenLiteral() + " " + es.Expression.String()
 	}
 	return ""
 }

@@ -47,7 +47,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifierLiteral)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
-	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -148,22 +147,19 @@ func (p *Parser) parseIdentifierLiteral() ast.Expression {
 	return lit
 }
 
-func (p *Parser) parseSelectExpression() ast.Expression {
-	expression := &ast.SelectExpression{Token: p.curToken}
-	p.nextToken() // read SELECT token
-	expression.Expression = p.parseExpression(LOWEST)
-	return expression
-}
-
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
+	case token.SELECT:
+		return p.parseSelectStatement()
 	default:
-		return p.parseExpressionStatement()
+		p.errors = append(p.errors, fmt.Sprintf("unknown statement token type %T", p.curToken.Type))
+		return nil
 	}
 }
 
-func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
+func (p *Parser) parseSelectStatement() *ast.SelectStatement {
+	stmt := &ast.SelectStatement{Token: p.curToken}
+	p.nextToken() // read SELECT token
 	stmt.Expression = p.parseExpression(LOWEST)
 	return stmt
 }

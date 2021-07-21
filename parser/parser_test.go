@@ -10,7 +10,7 @@ import (
 )
 
 func TestIntegerLiteralExpression(t *testing.T) {
-	input := "5"
+	input := "select 5"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -23,9 +23,9 @@ func TestIntegerLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
@@ -39,7 +39,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 }
 
 func TestFloatLiteralExpression(t *testing.T) {
-	input := "3.14"
+	input := "select 3.14"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -52,9 +52,9 @@ func TestFloatLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
 	literal, ok := stmt.Expression.(*ast.FloatLiteral)
@@ -73,7 +73,7 @@ func TestParsingPrefixExpression(t *testing.T) {
 		operator     string
 		integerValue int64
 	}{
-		{"-15", "-", 15},
+		{"select -15", "-", 15},
 	}
 	for _, tt := range prefixTest {
 		l := lexer.New(tt.input)
@@ -85,9 +85,9 @@ func TestParsingPrefixExpression(t *testing.T) {
 			t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
 		}
 
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		stmt, ok := program.Statements[0].(*ast.SelectStatement)
 		if !ok {
-			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 		}
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
@@ -130,10 +130,10 @@ func TestParsingInfixExpressions(t *testing.T) {
 		operator   string
 		rightValue int64
 	}{
-		{"5 + 5", 5, "+", 5},
-		{"5 - 5", 5, "-", 5},
-		{"5 * 5", 5, "*", 5},
-		{"5 / 5", 5, "/", 5},
+		{"select 5 + 5", 5, "+", 5},
+		{"select 5 - 5", 5, "-", 5},
+		{"select 5 * 5", 5, "*", 5},
+		{"select 5 / 5", 5, "/", 5},
 	}
 	for _, tt := range infixTests {
 		l := lexer.New(tt.input)
@@ -145,9 +145,9 @@ func TestParsingInfixExpressions(t *testing.T) {
 			t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
 		}
 
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		stmt, ok := program.Statements[0].(*ast.SelectStatement)
 		if !ok {
-			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 		}
 
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
@@ -185,44 +185,44 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		expected string
 	}{
 		{
-			"-1 * 2",
-			"((-1) * 2)",
+			"select -1 * 2",
+			"SELECT ((-1) * 2)",
 		},
 		{
-			"1 + 2 + 3",
-			"((1 + 2) + 3)",
+			"select 1 + 2 + 3",
+			"SELECT ((1 + 2) + 3)",
 		},
 		{
-			"1 + 2 - 3",
-			"((1 + 2) - 3)",
+			"select 1 + 2 - 3",
+			"SELECT ((1 + 2) - 3)",
 		},
 		{
-			"1 * 2 * 3",
-			"((1 * 2) * 3)",
+			"select 1 * 2 * 3",
+			"SELECT ((1 * 2) * 3)",
 		},
 		{
-			"1 * 2 / 3",
-			"((1 * 2) / 3)",
+			"select 1 * 2 / 3",
+			"SELECT ((1 * 2) / 3)",
 		},
 		{
-			"1 + 2 / 3",
-			"(1 + (2 / 3))",
+			"select 1 + 2 / 3",
+			"SELECT (1 + (2 / 3))",
 		},
 		{
-			"1 + (2 + 3) + 4",
-			"((1 + (2 + 3)) + 4)",
+			"select 1 + (2 + 3) + 4",
+			"SELECT ((1 + (2 + 3)) + 4)",
 		},
 		{
-			"(5 + 5) * 2",
-			"((5 + 5) * 2)",
+			"select (5 + 5) * 2",
+			"SELECT ((5 + 5) * 2)",
 		},
 		{
-			"2 / (5 + 5)",
-			"(2 / (5 + 5))",
+			"select 2 / (5 + 5)",
+			"SELECT (2 / (5 + 5))",
 		},
 		{
-			"-(5 + 5)",
-			"(-(5 + 5))",
+			"select -(5 + 5)",
+			"SELECT (-(5 + 5))",
 		},
 	}
 	for _, tt := range tests {
@@ -239,7 +239,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 }
 
 func TestStringLiteralExpression(t *testing.T) {
-	input := "'abc'"
+	input := "select 'abc'"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -252,9 +252,9 @@ func TestStringLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
 	literal, ok := stmt.Expression.(*ast.StringLiteral)
@@ -269,7 +269,7 @@ func TestStringLiteralExpression(t *testing.T) {
 }
 
 func TestIdentifierLiteralExpression(t *testing.T) {
-	input := "foo"
+	input := "select foo"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -282,9 +282,9 @@ func TestIdentifierLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
 	literal, ok := stmt.Expression.(*ast.IdentifierLiteral)
@@ -294,38 +294,6 @@ func TestIdentifierLiteralExpression(t *testing.T) {
 	expectedLiteral := "foo"
 	if literal.TokenLiteral() != expectedLiteral {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
-	}
-	checkParserErrors(t, p)
-}
-
-func TestSelectExpression(t *testing.T) {
-	input := "select 5"
-	l := lexer.New(input)
-	p := parser.New(l)
-
-	program := p.ParseProgram()
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
-	}
-
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
-	}
-
-	exp, ok := stmt.Expression.(*ast.SelectExpression)
-	if !ok {
-		t.Fatalf("exp not *ast.SelectExpression. got=%T", stmt.Expression)
-	}
-	if exp.TokenLiteral() != "SELECT" {
-		t.Errorf("literal.TokenLiteral not %s. got=%s", "SELECT", exp.TokenLiteral())
-	}
-	if !testIntegerLiteral(t, exp.Expression, 5) {
-		return
 	}
 	checkParserErrors(t, p)
 }
