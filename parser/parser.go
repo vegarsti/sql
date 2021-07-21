@@ -156,7 +156,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.SELECT:
 		return p.parseSelectStatement()
 	default:
-		p.errors = append(p.errors, fmt.Sprintf("unknown statement token type %T", p.curToken.Type))
+		p.errors = append(p.errors, fmt.Sprintf("expected start of statement, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 		return nil
 	}
 }
