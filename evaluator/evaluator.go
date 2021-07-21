@@ -11,8 +11,6 @@ func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalStatements(node.Statements)
-	case *ast.SelectExpression:
-		return evalSelectExpression(node)
 	case *ast.SelectStatement:
 		return Eval(node.Expression)
 	case *ast.PrefixExpression:
@@ -57,10 +55,6 @@ func evalStatements(stmts []ast.Statement) object.Object {
 		}
 	}
 	return result
-}
-
-func evalSelectExpression(se *ast.SelectExpression) object.Object {
-	return Eval(se.Expression)
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {

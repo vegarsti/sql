@@ -35,17 +35,6 @@ func (es *SelectStatement) String() string {
 	return ""
 }
 
-type SelectExpression struct {
-	Token      token.Token // The 'SELECT' token
-	Expression Expression
-}
-
-func (ss *SelectExpression) expressionNode()      {}
-func (ss *SelectExpression) TokenLiteral() string { return ss.Token.Literal }
-func (ss *SelectExpression) String() string {
-	return "SELECT " + ss.Expression.String()
-}
-
 type Program struct {
 	Statements []Statement
 }
