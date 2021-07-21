@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/vegarsti/sql/ast"
@@ -28,9 +29,13 @@ func TestIntegerLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.IntegerLiteral)
 	if !ok {
-		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expression)
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[0])
 	}
 	if literal.TokenLiteral() != "5" {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", "5", literal.TokenLiteral())
@@ -57,9 +62,13 @@ func TestFloatLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	literal, ok := stmt.Expression.(*ast.FloatLiteral)
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.FloatLiteral)
 	if !ok {
-		t.Fatalf("exp not *ast.FloatLiteral. got=%T", stmt.Expression)
+		t.Fatalf("exp not *ast.FloatLiteral. got=%T", stmt.Expressions[0])
 	}
 	if literal.TokenLiteral() != "3.14" {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", "3.14", literal.TokenLiteral())
@@ -90,9 +99,13 @@ func TestParsingPrefixExpression(t *testing.T) {
 			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 		}
 
-		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		if len(stmt.Expressions) != 1 {
+			t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+		}
+
+		exp, ok := stmt.Expressions[0].(*ast.PrefixExpression)
 		if !ok {
-			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
+			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expressions[0])
 		}
 		if exp.Operator != tt.operator {
 			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
@@ -150,9 +163,13 @@ func TestParsingInfixExpressions(t *testing.T) {
 			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 		}
 
-		exp, ok := stmt.Expression.(*ast.InfixExpression)
+		if len(stmt.Expressions) != 1 {
+			t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+		}
+
+		exp, ok := stmt.Expressions[0].(*ast.InfixExpression)
 		if !ok {
-			t.Fatalf("stmt is not ast.InfixExpression. got=%T", stmt.Expression)
+			t.Fatalf("stmt is not ast.InfixExpression. got=%T", stmt.Expressions[0])
 		}
 		if !testIntegerLiteral(t, exp.Left, tt.leftValue) {
 			return
@@ -257,9 +274,13 @@ func TestStringLiteralExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	literal, ok := stmt.Expression.(*ast.StringLiteral)
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.StringLiteral)
 	if !ok {
-		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expression)
+		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expressions[0])
 	}
 	expectedLiteral := "abc"
 	if literal.TokenLiteral() != expectedLiteral {
@@ -287,13 +308,71 @@ func TestIdentifierExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	literal, ok := stmt.Expression.(*ast.Identifier)
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.Identifier)
 	if !ok {
-		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expression)
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
 	}
 	expectedLiteral := "foo"
 	if literal.TokenLiteral() != expectedLiteral {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
 	}
+	checkParserErrors(t, p)
+}
+
+func TestSelectMultiple(t *testing.T) {
+	input := "select 5, 'abc',0"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	log.Println(program)
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 3 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 3, len(stmt.Expressions))
+	}
+
+	literal1, ok := stmt.Expressions[0].(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral1 := "5"
+	if literal1.TokenLiteral() != expectedLiteral1 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
+	}
+
+	literal2, ok := stmt.Expressions[1].(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expressions[1])
+	}
+	expectedLiteral2 := "abc"
+	if literal2.TokenLiteral() != expectedLiteral2 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral2, literal2.TokenLiteral())
+	}
+
+	literal3, ok := stmt.Expressions[2].(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[2])
+	}
+	expectedLiteral3 := "0"
+	if literal3.TokenLiteral() != expectedLiteral3 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral3, literal3.TokenLiteral())
+	}
+
 	checkParserErrors(t, p)
 }

@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/vegarsti/sql/token"
 )
@@ -22,17 +23,21 @@ type Expression interface {
 }
 
 type SelectStatement struct {
-	Token      token.Token // the SELECT token
-	Expression Expression
+	Token       token.Token // the SELECT token
+	Expressions []Expression
 }
 
 func (es *SelectStatement) statementNode()       {}
 func (es *SelectStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *SelectStatement) String() string {
-	if es.Expression != nil {
-		return es.TokenLiteral() + " " + es.Expression.String()
+	if len(es.Expressions) == 0 {
+		return ""
 	}
-	return ""
+	expressions := make([]string, len(es.Expressions))
+	for i, expr := range es.Expressions {
+		expressions[i] = expr.String()
+	}
+	return es.TokenLiteral() + " " + strings.Join(expressions, ", ")
 }
 
 type Program struct {
