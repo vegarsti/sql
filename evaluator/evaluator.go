@@ -12,7 +12,7 @@ func Eval(node ast.Node) object.Object {
 	case *ast.Program:
 		return evalStatements(node.Statements)
 	case *ast.SelectStatement:
-		return Eval(node.Expression)
+		return evalSelectStatement(node.Expressions)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		if isError(right) {
@@ -55,6 +55,16 @@ func evalStatements(stmts []ast.Statement) object.Object {
 		}
 	}
 	return result
+}
+
+func evalSelectStatement(expressions []ast.Expression) object.Object {
+	row := &object.Row{
+		Values: make([]object.Object, len(expressions)),
+	}
+	for i, e := range expressions {
+		row.Values[i] = Eval(e)
+	}
+	return row
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {

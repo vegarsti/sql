@@ -33,7 +33,14 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testIntegerObject(t, evaluated, tt.expected)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			t.Fatalf("object is not Row. got=%T", row)
+		}
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testIntegerObject(t, row.Values[0], tt.expected)
 	}
 }
 
@@ -72,7 +79,14 @@ func TestEvalFloatExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testFloatObject(t, evaluated, tt.expected)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			t.Fatalf("object is not Row. got=%T", row)
+		}
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testFloatObject(t, row.Values[0], tt.expected)
 	}
 }
 
@@ -101,7 +115,14 @@ func TestEvalStringExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testStringObject(t, evaluated, tt.expected)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			t.Fatalf("object is not Row. got=%T", row)
+		}
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testStringObject(t, row.Values[0], tt.expected)
 	}
 }
 
@@ -127,7 +148,14 @@ func TestEvalIdentifierExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testError(t, evaluated, tt.expectedErrorMessage)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			t.Fatalf("object is not Row. got=%T", row)
+		}
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testError(t, row.Values[0], tt.expectedErrorMessage)
 	}
 }
 

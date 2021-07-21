@@ -2,11 +2,13 @@ package object
 
 import (
 	"fmt"
+	"strings"
 )
 
 type ObjectType string
 
 const (
+	ROW_OBJ     = "ROW"
 	INTEGER_OBJ = "INTEGER"
 	FLOAT_OBJ   = "FLOAT"
 	STRING_OBJ  = "STRING"
@@ -17,6 +19,19 @@ type Object interface {
 	Type() ObjectType
 	Inspect() string
 }
+
+type Row struct {
+	Values []Object
+}
+
+func (r *Row) Inspect() string {
+	values := make([]string, len(r.Values))
+	for i, v := range r.Values {
+		values[i] = v.Inspect()
+	}
+	return strings.Join(values, ", ")
+}
+func (r *Row) Type() ObjectType { return ROW_OBJ }
 
 type Integer struct {
 	Value int64
