@@ -31,4 +31,5 @@ const (
 	RPAREN = ")"
 	DOT    = "."
 	QUOTE  = "'"
+	COMMA  = ","
 )
