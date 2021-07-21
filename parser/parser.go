@@ -162,9 +162,17 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
-	stmt := &ast.SelectStatement{Token: p.curToken}
+	stmt := &ast.SelectStatement{Token: p.curToken, Expressions: make([]ast.Expression, 0)}
 	p.nextToken() // read SELECT token
-	stmt.Expression = p.parseExpression(LOWEST)
+
+	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
+	p.nextToken()
+	for p.curToken.Type == token.COMMA {
+		p.nextToken() // read comma
+		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
+		p.nextToken() // advance to next token
+	}
+
 	return stmt
 }
 
