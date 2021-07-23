@@ -8,7 +8,7 @@ import (
 )
 
 func TestExpressionValue(t *testing.T) {
-	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord ,"
+	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As"
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -35,6 +35,10 @@ func TestExpressionValue(t *testing.T) {
 		{token.SELECT, "SELECT"},
 		{token.IDENTIFIER, "aWord"},
 		{token.COMMA, ","},
+		{token.AS, "AS"},
+		{token.AS, "AS"},
+		{token.AS, "AS"},
+		{token.AS, "AS"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {
