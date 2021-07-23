@@ -21,15 +21,26 @@ type Object interface {
 }
 
 type Row struct {
+	Names  []string
 	Values []Object
 }
 
 func (r *Row) Inspect() string {
+	for i := range r.Names {
+		// if a name exists, leave it
+		if r.Names[i] != "" {
+			continue
+		}
+		r.Names[i] = "?column?"
+	}
 	values := make([]string, len(r.Values))
 	for i, v := range r.Values {
 		values[i] = v.Inspect()
 	}
-	return strings.Join(values, "\t")
+	return strings.Join([]string{
+		strings.Join(r.Names, "\t"),
+		strings.Join(values, "\t"),
+	}, "\n")
 }
 func (r *Row) Type() ObjectType { return ROW_OBJ }
 

@@ -59,6 +59,7 @@ func evalStatements(stmts []ast.Statement) object.Object {
 
 func evalSelectStatement(expressions []ast.Expression) object.Object {
 	row := &object.Row{
+		Names:  make([]string, len(expressions)),
 		Values: make([]object.Object, len(expressions)),
 	}
 	for i, e := range expressions {
