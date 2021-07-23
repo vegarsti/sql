@@ -69,6 +69,9 @@ func evalSelectStatement(expressions []ast.Expression, names []string) object.Ob
 	}
 	for i, e := range expressions {
 		row.Values[i] = Eval(e)
+		if isError(row.Values[i]) {
+			return row.Values[i]
+		}
 	}
 	return row
 }
