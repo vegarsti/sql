@@ -11,6 +11,8 @@ $ go run cmd/sql/main.go
 1        3.140000 ✅     Vegard
 >> 1
 ERROR: expected start of statement, got INT token with literal 1
+>> select 1 + '3.14'
+ERROR: unknown operator: INTEGER + STRING
 ```
 
 Based on Thorsten Ball's excellent [Writing an Interpreter in Go](https://interpreterbook.com/).
