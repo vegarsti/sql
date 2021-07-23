@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"text/tabwriter"
 
 	"github.com/vegarsti/sql/evaluator"
 	"github.com/vegarsti/sql/lexer"
@@ -14,6 +15,7 @@ import (
 const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
+	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
 	scanner := bufio.NewScanner(in)
 
 	for {
@@ -35,9 +37,10 @@ func Start(in io.Reader, out io.Writer) {
 
 		evaluated := evaluator.Eval(program)
 		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+			w.Write([]byte(evaluated.Inspect()))
+			w.Write([]byte("\n"))
 		}
+		w.Flush()
 	}
 }
 
