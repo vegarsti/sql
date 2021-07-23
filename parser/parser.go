@@ -195,6 +195,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 		// check for AS
 		if p.curToken.Type != token.AS {
+			stmt.Names = append(stmt.Names, "")
 			continue
 		}
 		p.nextToken() // read AS

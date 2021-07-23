@@ -376,7 +376,7 @@ func TestSelectMultiple(t *testing.T) {
 }
 
 func TestSelectWithAs(t *testing.T) {
-	input := "select 5 as n, 'abc' as str"
+	input := "select 1, 5 as n, 'abc' as str, 2"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -394,38 +394,64 @@ func TestSelectWithAs(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	if len(stmt.Expressions) != 2 {
-		t.Fatalf("stmt does not contain %d expressions. got=%d", 2, len(stmt.Expressions))
+	if len(stmt.Expressions) != 4 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 4, len(stmt.Expressions))
 	}
 
-	if len(stmt.Names) != 2 {
-		t.Fatalf("stmt does not contain %d names. got=%d", 2, len(stmt.Expressions))
+	if len(stmt.Names) != 4 {
+		t.Fatalf("stmt does not contain %d names. got=%d", 4, len(stmt.Names))
 	}
 
 	literal1, ok := stmt.Expressions[0].(*ast.IntegerLiteral)
 	if !ok {
 		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[0])
 	}
-	expectedLiteral1 := "5"
+	expectedLiteral1 := "1"
 	if literal1.TokenLiteral() != expectedLiteral1 {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
 	}
-	expectedName1 := "n"
+	expectedName1 := ""
 	if stmt.Names[0] != expectedName1 {
 		t.Errorf("name not %s. got=%s", expectedName1, stmt.Names[0])
 	}
 
-	literal2, ok := stmt.Expressions[1].(*ast.StringLiteral)
+	literal2, ok := stmt.Expressions[1].(*ast.IntegerLiteral)
 	if !ok {
-		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expressions[1])
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[1])
 	}
-	expectedLiteral2 := "abc"
+	expectedLiteral2 := "5"
 	if literal2.TokenLiteral() != expectedLiteral2 {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral2, literal2.TokenLiteral())
 	}
-	expectedName2 := "str"
+	expectedName2 := "n"
 	if stmt.Names[1] != expectedName2 {
 		t.Errorf("name not %s. got=%s", expectedName2, stmt.Names[1])
+	}
+
+	literal3, ok := stmt.Expressions[2].(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expressions[2])
+	}
+	expectedLiteral3 := "abc"
+	if literal3.TokenLiteral() != expectedLiteral3 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral3, literal3.TokenLiteral())
+	}
+	expectedName3 := "str"
+	if stmt.Names[2] != expectedName3 {
+		t.Errorf("name not %s. got=%s", expectedName3, stmt.Names[2])
+	}
+
+	literal4, ok := stmt.Expressions[3].(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[3])
+	}
+	expectedLiteral4 := "2"
+	if literal4.TokenLiteral() != expectedLiteral4 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral4, literal4.TokenLiteral())
+	}
+	expectedName4 := ""
+	if stmt.Names[3] != expectedName1 {
+		t.Errorf("name not %s. got=%s", expectedName4, stmt.Names[3])
 	}
 
 	checkParserErrors(t, p)
