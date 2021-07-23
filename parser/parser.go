@@ -162,14 +162,50 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
-	stmt := &ast.SelectStatement{Token: p.curToken, Expressions: make([]ast.Expression, 0)}
+	stmt := &ast.SelectStatement{
+		Token:       p.curToken,
+		Expressions: make([]ast.Expression, 0),
+		Names:       make([]string, 0),
+	}
 	p.nextToken() // read SELECT token
 
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
 	p.nextToken()
+
+	// check for AS
+	if p.curToken.Type == token.AS {
+		p.nextToken() // read AS
+
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.Names = append(stmt.Names, p.curToken.Literal)
+
+		p.nextToken()
+	} else {
+		stmt.Names = append(stmt.Names, "")
+	}
+
 	for p.curToken.Type == token.COMMA {
 		p.nextToken() // read comma
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
+		p.nextToken() // advance to next token
+
+		// check for AS
+		if p.curToken.Type != token.AS {
+			continue
+		}
+		p.nextToken() // read AS
+
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.Names = append(stmt.Names, p.curToken.Literal)
+
 		p.nextToken() // advance to next token
 	}
 

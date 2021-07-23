@@ -2,7 +2,6 @@ package parser_test
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/vegarsti/sql/ast"
@@ -329,7 +328,6 @@ func TestSelectMultiple(t *testing.T) {
 	p := parser.New(l)
 
 	program := p.ParseProgram()
-	log.Println(program)
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -372,6 +370,62 @@ func TestSelectMultiple(t *testing.T) {
 	expectedLiteral3 := "0"
 	if literal3.TokenLiteral() != expectedLiteral3 {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral3, literal3.TokenLiteral())
+	}
+
+	checkParserErrors(t, p)
+}
+
+func TestSelectWithAs(t *testing.T) {
+	input := "select 5 as n, 'abc' as str"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 2 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 2, len(stmt.Expressions))
+	}
+
+	if len(stmt.Names) != 2 {
+		t.Fatalf("stmt does not contain %d names. got=%d", 2, len(stmt.Expressions))
+	}
+
+	literal1, ok := stmt.Expressions[0].(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.IntegerLiteral. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral1 := "5"
+	if literal1.TokenLiteral() != expectedLiteral1 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
+	}
+	expectedName1 := "n"
+	if stmt.Names[0] != expectedName1 {
+		t.Errorf("name not %s. got=%s", expectedName1, stmt.Names[0])
+	}
+
+	literal2, ok := stmt.Expressions[1].(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expressions[1])
+	}
+	expectedLiteral2 := "abc"
+	if literal2.TokenLiteral() != expectedLiteral2 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral2, literal2.TokenLiteral())
+	}
+	expectedName2 := "str"
+	if stmt.Names[1] != expectedName2 {
+		t.Errorf("name not %s. got=%s", expectedName2, stmt.Names[1])
 	}
 
 	checkParserErrors(t, p)
