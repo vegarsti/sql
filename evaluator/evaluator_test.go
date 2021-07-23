@@ -149,14 +149,7 @@ func TestEvalIdentifierExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		row, ok := evaluated.(*object.Row)
-		if !ok {
-			t.Fatalf("object is not Row. got=%T", row)
-		}
-		if len(row.Values) != 1 {
-			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
-		}
-		testError(t, row.Values[0], tt.expectedErrorMessage)
+		testError(t, evaluated, tt.expectedErrorMessage)
 	}
 }
 
@@ -179,7 +172,10 @@ func TestEvalSelectMultiple(t *testing.T) {
 		expectedValues []interface{}
 		expectedNames  []string
 	}{
-		{"select 'abc', 1 as n, 3.14 as pi", []interface{}{"abc", int64(1), float64(3.14)}, []string{"?column?", "n", "pi"}},
+		{
+			"select 'abc', 1 as n, 3.14 as pi, -1",
+			[]interface{}{"abc", int64(1), float64(3.14), int64(-1)},
+			[]string{"?column?", "n", "pi", "?column?"}},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -187,8 +183,11 @@ func TestEvalSelectMultiple(t *testing.T) {
 		if !ok {
 			t.Fatalf("object is not Row. got=%T", row)
 		}
-		if len(row.Values) != 3 {
-			t.Fatalf("expected row to contain 3 elements. got=%d", len(row.Values))
+		if len(row.Values) != 4 {
+			t.Fatalf("expected row.Values to contain 4 elements. got=%d", len(row.Values))
+		}
+		if len(row.Names) != 4 {
+			t.Fatalf("expected row.Names to have 4 elements. got=%d", len(row.Names))
 		}
 
 		// assert values
@@ -198,6 +197,8 @@ func TestEvalSelectMultiple(t *testing.T) {
 		testIntegerObject(t, row.Values[1], n)
 		f := tt.expectedValues[2].(float64)
 		testFloatObject(t, row.Values[2], f)
+		m := tt.expectedValues[3].(int64)
+		testIntegerObject(t, row.Values[3], m)
 
 		// assert names
 		expectedRowNames := strings.Join(tt.expectedNames, ", ")
