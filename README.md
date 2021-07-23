@@ -6,8 +6,9 @@
 
 ```
 $ go run cmd/sql/main.go
->> select 1, '🤩', (5 + 10 * 2 + 15 * 3) * 2 + -10, 3.14
-1       🤩      130     3.140000
+>> select 1, 3.14 as pi, '✅' as emoji, 'Vegard' as name
+?column? pi       emoji name
+1        3.140000 ✅     Vegard
 >> 1
 ERROR: expected start of statement, got INT token with literal 1
 ```
