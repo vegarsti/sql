@@ -1,6 +1,7 @@
 package evaluator_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/vegarsti/sql/evaluator"
@@ -170,4 +171,39 @@ func testError(t *testing.T, obj object.Object, expectedMessage string) bool {
 		return false
 	}
 	return true
+}
+
+func TestEvalSelectMultiple(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedValues []interface{}
+		expectedNames  []string
+	}{
+		{"select 'abc', 1 as n, 3.14 as pi", []interface{}{"abc", int64(1), float64(3.14)}, []string{"?column?", "n", "pi"}},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			t.Fatalf("object is not Row. got=%T", row)
+		}
+		if len(row.Values) != 3 {
+			t.Fatalf("expected row to contain 3 elements. got=%d", len(row.Values))
+		}
+
+		// assert values
+		s := tt.expectedValues[0].(string)
+		testStringObject(t, row.Values[0], s)
+		n := tt.expectedValues[1].(int64)
+		testIntegerObject(t, row.Values[1], n)
+		f := tt.expectedValues[2].(float64)
+		testFloatObject(t, row.Values[2], f)
+
+		// assert names
+		expectedRowNames := strings.Join(tt.expectedNames, ", ")
+		rowNames := strings.Join(row.Names, ", ")
+		if rowNames != expectedRowNames {
+			t.Fatalf("expected row names to be [%s], but was [%s]", expectedRowNames, rowNames)
+		}
+	}
 }
