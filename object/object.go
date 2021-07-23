@@ -26,13 +26,6 @@ type Row struct {
 }
 
 func (r *Row) Inspect() string {
-	for i := range r.Names {
-		// if a name exists, leave it
-		if r.Names[i] != "" {
-			continue
-		}
-		r.Names[i] = "?column?"
-	}
 	values := make([]string, len(r.Values))
 	for i, v := range r.Values {
 		values[i] = v.Inspect()
