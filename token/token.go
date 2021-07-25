@@ -26,6 +26,8 @@ const (
 	// Keywords
 	SELECT = "SELECT"
 	AS     = "AS"
+	CREATE = "CREATE"
+	TABLE  = "TABLE"
 
 	// Delimiters
 	LPAREN = "("
