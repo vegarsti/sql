@@ -13,6 +13,8 @@ func Eval(node ast.Node) object.Object {
 		return evalStatements(node.Statements)
 	case *ast.SelectStatement:
 		return evalSelectStatement(node.Expressions, node.Names)
+	case *ast.CreateTableStatement:
+		return evalCreateTableStatement(node)
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		if isError(right) {
@@ -74,6 +76,10 @@ func evalSelectStatement(expressions []ast.Expression, names []string) object.Ob
 		}
 	}
 	return row
+}
+
+func evalCreateTableStatement(cst *ast.CreateTableStatement) object.Object {
+	return nil
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {
