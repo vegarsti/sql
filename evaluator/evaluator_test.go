@@ -33,10 +33,10 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"select (5 + 10 * 2 + 15 * 3) * 2 + -10", 130},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(newTestBackend(), tt.input)
 		row, ok := evaluated.(*object.Row)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", row)
+			t.Fatalf("object is not Row. got=%T", evaluated)
 		}
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
@@ -45,11 +45,11 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
-func testEval(input string) object.Object {
+func testEval(backend *testBackend, input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	return evaluator.Eval(program)
+	return evaluator.Eval(backend, program)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
@@ -79,10 +79,10 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"select 1 / 1", 1},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(newTestBackend(), tt.input)
 		row, ok := evaluated.(*object.Row)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", row)
+			t.Fatalf("object is not Row. got=%T", evaluated)
 		}
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
@@ -115,10 +115,10 @@ func TestEvalStringExpression(t *testing.T) {
 		{"select '🤩'", "🤩"},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(newTestBackend(), tt.input)
 		row, ok := evaluated.(*object.Row)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", row)
+			t.Fatalf("object is not Row. got=%T", evaluated)
 		}
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
@@ -148,7 +148,7 @@ func TestEvalIdentifierExpression(t *testing.T) {
 		{"select foo", "no such column: foo"},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(newTestBackend(), tt.input)
 		testError(t, evaluated, tt.expectedErrorMessage)
 	}
 }
@@ -179,10 +179,10 @@ func TestEvalSelectMultiple(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
+		evaluated := testEval(newTestBackend(), tt.input)
 		row, ok := evaluated.(*object.Row)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", row)
+			t.Fatalf("object is not Row. got=%T", evaluated)
 		}
 		if len(row.Values) != 4 {
 			t.Fatalf("expected row.Values to contain 4 elements. got=%d", len(row.Values))
@@ -210,6 +210,19 @@ func TestEvalSelectMultiple(t *testing.T) {
 	}
 }
 
+type testBackend struct {
+	tables map[string][]object.Column
+}
+
+func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
+	tb.tables[name] = columns
+	return nil
+}
+
+func newTestBackend() *testBackend {
+	return &testBackend{tables: make(map[string][]object.Column)}
+}
+
 func TestEvalCreateTable(t *testing.T) {
 	tests := []struct {
 		input         string
@@ -230,9 +243,23 @@ func TestEvalCreateTable(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
-		if errorObject, ok := evaluated.(*object.Error); ok {
-			t.Fatalf("returned object is Error: %v", errorObject)
+		backend := newTestBackend()
+		evaluated := testEval(backend, tt.input)
+		if _, ok := evaluated.(*object.OK); !ok {
+			t.Fatalf("object is not OK. got=%T", evaluated)
+		}
+		columns := backend.tables[tt.tableName]
+		expectedColumns := tt.expectedTable.Columns
+		if len(columns) != len(expectedColumns) {
+			t.Fatalf("expected %d columns. got=%d", len(expectedColumns), len(columns))
+		}
+		for i := range columns {
+			if columns[i].Name != expectedColumns[i].Name {
+				t.Fatalf("expected column name %s. got=%s", expectedColumns[i].Name, columns[i].Name)
+			}
+			if columns[i].Type != expectedColumns[i].Type {
+				t.Fatalf("expected column type %s. got=%s", expectedColumns[i].Type, columns[i].Type)
+			}
 		}
 	}
 }
