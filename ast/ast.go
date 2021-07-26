@@ -25,7 +25,7 @@ type Expression interface {
 type SelectStatement struct {
 	Token       token.Token // the SELECT token
 	Expressions []Expression
-	Names       []string
+	Aliases     []string // SELECT value AS some_alias
 }
 
 func (es *SelectStatement) statementNode()       {}

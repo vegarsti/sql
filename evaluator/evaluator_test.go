@@ -187,8 +187,8 @@ func TestEvalSelectMultiple(t *testing.T) {
 		if len(row.Values) != 4 {
 			t.Fatalf("expected row.Values to contain 4 elements. got=%d", len(row.Values))
 		}
-		if len(row.Names) != 4 {
-			t.Fatalf("expected row.Names to have 4 elements. got=%d", len(row.Names))
+		if len(row.Aliases) != 4 {
+			t.Fatalf("expected row.Names to have 4 elements. got=%d", len(row.Aliases))
 		}
 
 		// assert values
@@ -203,7 +203,7 @@ func TestEvalSelectMultiple(t *testing.T) {
 
 		// assert names
 		expectedRowNames := strings.Join(tt.expectedNames, ", ")
-		rowNames := strings.Join(row.Names, ", ")
+		rowNames := strings.Join(row.Aliases, ", ")
 		if rowNames != expectedRowNames {
 			t.Fatalf("expected row names to be [%s], but was [%s]", expectedRowNames, rowNames)
 		}

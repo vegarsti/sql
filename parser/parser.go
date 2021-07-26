@@ -167,7 +167,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt := &ast.SelectStatement{
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
-		Names:       make([]string, 0),
+		Aliases:     make([]string, 0),
 	}
 	p.nextToken() // read SELECT token
 
@@ -183,11 +183,11 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 			return nil
 		}
-		stmt.Names = append(stmt.Names, p.curToken.Literal)
+		stmt.Aliases = append(stmt.Aliases, p.curToken.Literal)
 
 		p.nextToken()
 	} else {
-		stmt.Names = append(stmt.Names, "")
+		stmt.Aliases = append(stmt.Aliases, "")
 	}
 
 	for p.curToken.Type == token.COMMA {
@@ -197,7 +197,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 		// check for AS
 		if p.curToken.Type != token.AS {
-			stmt.Names = append(stmt.Names, "")
+			stmt.Aliases = append(stmt.Aliases, "")
 			continue
 		}
 		p.nextToken() // read AS
@@ -207,7 +207,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 			return nil
 		}
-		stmt.Names = append(stmt.Names, p.curToken.Literal)
+		stmt.Aliases = append(stmt.Aliases, p.curToken.Literal)
 
 		p.nextToken() // advance to next token
 	}

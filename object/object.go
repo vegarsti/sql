@@ -21,8 +21,8 @@ type Object interface {
 }
 
 type Row struct {
-	Names  []string
-	Values []Object
+	Aliases []string
+	Values  []Object
 }
 
 func (r *Row) Inspect() string {
@@ -31,7 +31,7 @@ func (r *Row) Inspect() string {
 		values[i] = v.Inspect()
 	}
 	return strings.Join([]string{
-		strings.Join(r.Names, "\t"),
+		strings.Join(r.Aliases, "\t"),
 		strings.Join(values, "\t"),
 	}, "\n")
 }
