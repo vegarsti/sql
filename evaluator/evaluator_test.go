@@ -209,3 +209,30 @@ func TestEvalSelectMultiple(t *testing.T) {
 		}
 	}
 }
+
+func TestEvalCreateTable(t *testing.T) {
+	tests := []struct {
+		input         string
+		tableName     string
+		expectedTable object.Table
+	}{
+		{
+			"create table foo (a text, b integer, c double)",
+			"foo",
+			object.Table{
+				Name: "foo",
+				Columns: []object.Column{
+					{Name: "a", Type: object.TEXT},
+					{Name: "b", Type: object.INTEGER},
+					{Name: "c", Type: object.DOUBLE},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		if errorObject, ok := evaluated.(*object.Error); ok {
+			t.Fatalf("returned object is Error: %v", errorObject)
+		}
+	}
+}

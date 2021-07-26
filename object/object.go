@@ -37,6 +37,24 @@ func (r *Row) Inspect() string {
 }
 func (r *Row) Type() ObjectType { return ROW_OBJ }
 
+type DataType string
+
+const (
+	TEXT    = "TEXT"
+	INTEGER = "INTEGER"
+	DOUBLE  = "DOUBLE"
+)
+
+type Table struct {
+	Name    string
+	Columns []Column
+}
+
+type Column struct {
+	Name string
+	Type DataType
+}
+
 type Integer struct {
 	Value int64
 }
