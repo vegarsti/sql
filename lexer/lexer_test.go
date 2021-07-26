@@ -8,7 +8,7 @@ import (
 )
 
 func TestExpressionValue(t *testing.T) {
-	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table"
+	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer"
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -41,6 +41,9 @@ func TestExpressionValue(t *testing.T) {
 		{token.AS, "AS"},
 		{token.CREATE, "CREATE"},
 		{token.TABLE, "TABLE"},
+		{token.TEXT, "TEXT"},
+		{token.DOUBLE, "DOUBLE"},
+		{token.INTEGER, "INTEGER"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {
