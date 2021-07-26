@@ -29,6 +29,11 @@ const (
 	CREATE = "CREATE"
 	TABLE  = "TABLE"
 
+	// Types
+	TEXT    = "TEXT"
+	DOUBLE  = "DOUBLE"
+	INTEGER = "INTEGER"
+
 	// Delimiters
 	LPAREN = "("
 	RPAREN = ")"

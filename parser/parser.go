@@ -155,6 +155,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.SELECT:
 		return p.parseSelectStatement()
+	case token.CREATE:
+		return p.parseCreateTableStatement()
 	default:
 		p.errors = append(p.errors, fmt.Sprintf("expected start of statement, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 		return nil
@@ -213,6 +215,53 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	return stmt
 }
 
+func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
+	stmt := &ast.CreateTableStatement{
+		Token:   p.curToken,
+		Columns: make(map[string]token.Token),
+	}
+
+	if !p.expectPeek(token.TABLE) {
+		return nil
+	}
+
+	// assert next token is an identifier
+	if p.peekToken.Type != token.IDENTIFIER {
+		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		return nil
+	}
+	p.nextToken()
+	stmt.Name = p.curToken.Literal
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	// parse column pairs
+
+	// assert next token is a column identifier
+	if p.peekToken.Type != token.IDENTIFIER {
+		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		return nil
+	}
+	p.nextToken()
+	columnLiteral := p.curToken.Literal
+
+	// assert next token is a column type
+	if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER) {
+		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		return nil
+	}
+	p.nextToken()
+	stmt.Columns[columnLiteral] = p.curToken
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return stmt
+}
+
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -255,8 +304,8 @@ func (p *Parser) Errors() []string {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
-		t, p.peekToken.Type)
+	msg := fmt.Sprintf("expected next token to be %s, got %s %s instead",
+		t, p.peekToken.Type, p.peekToken.Literal)
 	p.errors = append(p.errors, msg)
 }
 
