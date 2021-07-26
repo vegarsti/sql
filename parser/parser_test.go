@@ -7,6 +7,7 @@ import (
 	"github.com/vegarsti/sql/ast"
 	"github.com/vegarsti/sql/lexer"
 	"github.com/vegarsti/sql/parser"
+	"github.com/vegarsti/sql/token"
 )
 
 func TestIntegerLiteralExpression(t *testing.T) {
@@ -458,7 +459,7 @@ func TestSelectWithAs(t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	input := "create table foo (a text)"
+	input := "create table foo (a text, b integer, c double)"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -482,7 +483,26 @@ func TestCreateTable(t *testing.T) {
 		t.Fatalf("ast.CreateTableStatement is nil")
 	}
 
-	if len(stmt.Columns) != 1 {
-		t.Fatalf("stmt does not contain %d column. got=%d", 1, len(stmt.Columns))
+	expectedColumns := map[string]token.Token{
+		"a": {Type: token.TEXT, Literal: token.TEXT},
+		"b": {Type: token.INTEGER, Literal: token.INTEGER},
+		"c": {Type: token.DOUBLE, Literal: token.DOUBLE},
+	}
+
+	if len(stmt.Columns) != len(expectedColumns) {
+		t.Fatalf("stmt does not contain %d columns. got=%d", len(stmt.Columns), len(expectedColumns))
+	}
+
+	for name, expectedToken := range expectedColumns {
+		column, ok := stmt.Columns[name]
+		if !ok {
+			t.Fatalf("stmt does not contain column %s", name)
+		}
+		if column.Literal != expectedToken.Literal {
+			t.Fatalf("expected token literal %s for column %s. got=%s", expectedToken.Literal, name, column.Literal)
+		}
+		if stmt.Columns[name].Type != expectedToken.Type {
+			t.Fatalf("expected token type %T for column %s. got=%T", expectedToken.Type, name, column.Type)
+		}
 	}
 }
