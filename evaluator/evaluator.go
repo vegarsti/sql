@@ -7,26 +7,30 @@ import (
 	"github.com/vegarsti/sql/object"
 )
 
-func Eval(node ast.Node) object.Object {
+type Backend interface {
+	CreateTable(string, []object.Column) error
+}
+
+func Eval(backend Backend, node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalStatements(backend, node.Statements)
 	case *ast.SelectStatement:
-		return evalSelectStatement(node.Expressions, node.Aliases)
+		return evalSelectStatement(backend, node.Expressions, node.Aliases)
 	case *ast.CreateTableStatement:
-		return evalCreateTableStatement(node)
+		return evalCreateTableStatement(backend, node)
 	case *ast.PrefixExpression:
-		right := Eval(node.Right)
+		right := Eval(backend, node.Right)
 		if isError(right) {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left := Eval(node.Left)
+		left := Eval(backend, node.Left)
 		if isError(left) {
 			return left
 		}
-		right := Eval(node.Right)
+		right := Eval(backend, node.Right)
 		if isError(right) {
 			return right
 		}
@@ -48,10 +52,10 @@ func Eval(node ast.Node) object.Object {
 	}
 }
 
-func evalStatements(stmts []ast.Statement) object.Object {
+func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	var result object.Object
 	for _, statement := range stmts {
-		result = Eval(statement)
+		result = Eval(backend, statement)
 		if isError(result) {
 			return result
 		}
@@ -59,7 +63,7 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	return result
 }
 
-func evalSelectStatement(expressions []ast.Expression, aliases []string) object.Object {
+func evalSelectStatement(backend Backend, expressions []ast.Expression, aliases []string) object.Object {
 	row := &object.Row{
 		Aliases: aliases,
 		Values:  make([]object.Object, len(expressions)),
@@ -70,7 +74,7 @@ func evalSelectStatement(expressions []ast.Expression, aliases []string) object.
 		}
 	}
 	for i, e := range expressions {
-		row.Values[i] = Eval(e)
+		row.Values[i] = Eval(backend, e)
 		if isError(row.Values[i]) {
 			return row.Values[i]
 		}
@@ -78,8 +82,20 @@ func evalSelectStatement(expressions []ast.Expression, aliases []string) object.
 	return row
 }
 
-func evalCreateTableStatement(cst *ast.CreateTableStatement) object.Object {
-	return nil
+func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {
+	columns := make([]object.Column, len(cst.Columns))
+	i := 0
+	for name, typeToken := range cst.Columns {
+		columns[i] = object.Column{
+			Name: name,
+			Type: object.DataType(typeToken.Literal), // This should always be valid since it has parsed successfully
+		}
+		i++
+	}
+	if err := backend.CreateTable(cst.Name, columns); err != nil {
+		return newError(fmt.Errorf("create table: %w", err).Error())
+	}
+	return &object.OK{}
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {
