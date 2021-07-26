@@ -12,7 +12,7 @@ func Eval(node ast.Node) object.Object {
 	case *ast.Program:
 		return evalStatements(node.Statements)
 	case *ast.SelectStatement:
-		return evalSelectStatement(node.Expressions, node.Names)
+		return evalSelectStatement(node.Expressions, node.Aliases)
 	case *ast.CreateTableStatement:
 		return evalCreateTableStatement(node)
 	case *ast.PrefixExpression:
@@ -59,14 +59,14 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	return result
 }
 
-func evalSelectStatement(expressions []ast.Expression, names []string) object.Object {
+func evalSelectStatement(expressions []ast.Expression, aliases []string) object.Object {
 	row := &object.Row{
-		Names:  names,
-		Values: make([]object.Object, len(expressions)),
+		Aliases: aliases,
+		Values:  make([]object.Object, len(expressions)),
 	}
-	for i, n := range names {
+	for i, n := range aliases {
 		if n == "" {
-			names[i] = "?column?"
+			aliases[i] = "?column?"
 		}
 	}
 	for i, e := range expressions {

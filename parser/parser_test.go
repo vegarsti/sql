@@ -399,8 +399,8 @@ func TestSelectWithAs(t *testing.T) {
 		t.Fatalf("stmt does not contain %d expressions. got=%d", 4, len(stmt.Expressions))
 	}
 
-	if len(stmt.Names) != 4 {
-		t.Fatalf("stmt does not contain %d names. got=%d", 4, len(stmt.Names))
+	if len(stmt.Aliases) != 4 {
+		t.Fatalf("stmt does not contain %d names. got=%d", 4, len(stmt.Aliases))
 	}
 
 	literal1, ok := stmt.Expressions[0].(*ast.IntegerLiteral)
@@ -412,8 +412,8 @@ func TestSelectWithAs(t *testing.T) {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
 	}
 	expectedName1 := ""
-	if stmt.Names[0] != expectedName1 {
-		t.Errorf("name not %s. got=%s", expectedName1, stmt.Names[0])
+	if stmt.Aliases[0] != expectedName1 {
+		t.Errorf("name not %s. got=%s", expectedName1, stmt.Aliases[0])
 	}
 
 	literal2, ok := stmt.Expressions[1].(*ast.IntegerLiteral)
@@ -425,8 +425,8 @@ func TestSelectWithAs(t *testing.T) {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral2, literal2.TokenLiteral())
 	}
 	expectedName2 := "n"
-	if stmt.Names[1] != expectedName2 {
-		t.Errorf("name not %s. got=%s", expectedName2, stmt.Names[1])
+	if stmt.Aliases[1] != expectedName2 {
+		t.Errorf("name not %s. got=%s", expectedName2, stmt.Aliases[1])
 	}
 
 	literal3, ok := stmt.Expressions[2].(*ast.StringLiteral)
@@ -438,8 +438,8 @@ func TestSelectWithAs(t *testing.T) {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral3, literal3.TokenLiteral())
 	}
 	expectedName3 := "str"
-	if stmt.Names[2] != expectedName3 {
-		t.Errorf("name not %s. got=%s", expectedName3, stmt.Names[2])
+	if stmt.Aliases[2] != expectedName3 {
+		t.Errorf("name not %s. got=%s", expectedName3, stmt.Aliases[2])
 	}
 
 	literal4, ok := stmt.Expressions[3].(*ast.IntegerLiteral)
@@ -451,8 +451,8 @@ func TestSelectWithAs(t *testing.T) {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral4, literal4.TokenLiteral())
 	}
 	expectedName4 := ""
-	if stmt.Names[3] != expectedName1 {
-		t.Errorf("name not %s. got=%s", expectedName4, stmt.Names[3])
+	if stmt.Aliases[3] != expectedName1 {
+		t.Errorf("name not %s. got=%s", expectedName4, stmt.Aliases[3])
 	}
 
 	checkParserErrors(t, p)
