@@ -41,6 +41,27 @@ func (es *SelectStatement) String() string {
 	return es.TokenLiteral() + " " + strings.Join(expressions, ", ")
 }
 
+type CreateTableStatement struct {
+	Token   token.Token // the CREATE token
+	Name    string
+	Columns map[string]token.Token
+}
+
+func (cts *CreateTableStatement) statementNode()       {}
+func (cts *CreateTableStatement) TokenLiteral() string { return cts.Token.Literal }
+func (cts *CreateTableStatement) String() string {
+	if len(cts.Columns) == 0 {
+		return ""
+	}
+	columns := make([]string, len(cts.Columns))
+	i := 0
+	for name, tok := range cts.Columns {
+		columns[i] = name + " " + tok.Literal
+		i++
+	}
+	return "CREATE TABLE " + cts.Name + " " + "(" + strings.Join(columns, ", ") + ")"
+}
+
 type Program struct {
 	Statements []Statement
 }

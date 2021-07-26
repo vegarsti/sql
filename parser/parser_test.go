@@ -456,3 +456,33 @@ func TestSelectWithAs(t *testing.T) {
 
 	checkParserErrors(t, p)
 }
+
+func TestCreateTable(t *testing.T) {
+	input := "create table foo (a text)"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.CreateTableStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.CreateTableStatement. got=%T", program.Statements[0])
+	}
+
+	if stmt == nil {
+		t.Fatalf("ast.CreateTableStatement is nil")
+	}
+
+	if len(stmt.Columns) != 1 {
+		t.Fatalf("stmt does not contain %d column. got=%d", 1, len(stmt.Columns))
+	}
+}
