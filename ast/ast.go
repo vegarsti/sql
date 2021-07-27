@@ -62,6 +62,22 @@ func (cts *CreateTableStatement) String() string {
 	return "CREATE TABLE " + cts.Name + " " + "(" + strings.Join(columns, ", ") + ")"
 }
 
+type InsertStatement struct {
+	Token       token.Token // the INSERT token
+	TableName   string
+	Expressions []Expression
+}
+
+func (is *InsertStatement) statementNode()       {}
+func (is *InsertStatement) TokenLiteral() string { return is.Token.Literal }
+func (is *InsertStatement) String() string {
+	expressions := make([]string, len(is.Expressions))
+	for i, e := range is.Expressions {
+		expressions[i] = e.String()
+	}
+	return "INSERT INTO " + is.TableName + " VALUES " + "(" + strings.Join(expressions, ", ") + ")"
+}
+
 type Program struct {
 	Statements []Statement
 }

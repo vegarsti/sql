@@ -157,6 +157,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseSelectStatement()
 	case token.CREATE:
 		return p.parseCreateTableStatement()
+	case token.INSERT:
+		return p.parseInsertStatement()
 	default:
 		p.errors = append(p.errors, fmt.Sprintf("expected start of statement, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 		return nil
@@ -271,6 +273,58 @@ func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
 		}
 		p.nextToken()
 		stmt.Columns[columnLiteral] = p.curToken
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseInsertStatement() *ast.InsertStatement {
+	stmt := &ast.InsertStatement{
+		Token:       p.curToken,
+		Expressions: make([]ast.Expression, 0),
+	}
+
+	if !p.expectPeek(token.INTO) {
+		return nil
+	}
+
+	// assert next token is an identifier
+	if p.peekToken.Type != token.IDENTIFIER {
+		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		return nil
+	}
+	p.nextToken()
+	stmt.TableName = p.curToken.Literal
+
+	if !p.expectPeek(token.VALUES) {
+		return nil
+	}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+
+	expr := p.parseExpression(LOWEST)
+	if expr == nil {
+		return nil
+	}
+	stmt.Expressions = append(stmt.Expressions, expr)
+
+	for p.peekToken.Type == token.COMMA {
+		p.nextToken()
+		p.nextToken()
+
+		expr := p.parseExpression(LOWEST)
+		if expr == nil {
+			return nil
+		}
+		stmt.Expressions = append(stmt.Expressions, expr)
 	}
 
 	if !p.expectPeek(token.RPAREN) {
