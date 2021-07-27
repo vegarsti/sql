@@ -9,6 +9,7 @@ import (
 
 type Backend interface {
 	CreateTable(string, []object.Column) error
+	InsertInto(string, object.Row) error
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -19,6 +20,8 @@ func Eval(backend Backend, node ast.Node) object.Object {
 		return evalSelectStatement(backend, node.Expressions, node.Aliases)
 	case *ast.CreateTableStatement:
 		return evalCreateTableStatement(backend, node)
+	case *ast.InsertStatement:
+		return evalInsertStatement(backend, node)
 	case *ast.PrefixExpression:
 		right := Eval(backend, node.Right)
 		if isError(right) {
@@ -93,6 +96,20 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 		i++
 	}
 	if err := backend.CreateTable(cst.Name, columns); err != nil {
+		return newError(err.Error())
+	}
+	return &object.OK{}
+}
+
+func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
+	row := object.Row{
+		Values: make([]object.Object, len(is.Expressions)),
+	}
+	for i, es := range is.Expressions {
+		obj := Eval(backend, es)
+		row.Values[i] = obj
+	}
+	if err := backend.InsertInto(is.TableName, row); err != nil {
 		return newError(err.Error())
 	}
 	return &object.OK{}

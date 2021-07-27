@@ -213,6 +213,7 @@ func TestEvalSelectMultiple(t *testing.T) {
 
 type testBackend struct {
 	tables map[string][]object.Column
+	rows   map[string][]object.Row
 }
 
 func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
@@ -220,11 +221,23 @@ func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
 		return fmt.Errorf(`relation "%s" already exists`, name)
 	}
 	tb.tables[name] = columns
+	tb.rows[name] = make([]object.Row, 0)
+	return nil
+}
+
+func (tb *testBackend) InsertInto(name string, row object.Row) error {
+	if _, ok := tb.tables[name]; !ok {
+		return fmt.Errorf(`relation "%s" does not exist`, name)
+	}
+	tb.rows[name] = append(tb.rows[name], row)
 	return nil
 }
 
 func newTestBackend() *testBackend {
-	return &testBackend{tables: make(map[string][]object.Column)}
+	return &testBackend{
+		tables: make(map[string][]object.Column),
+		rows:   make(map[string][]object.Row),
+	}
 }
 
 func TestEvalCreateTable(t *testing.T) {
@@ -263,6 +276,52 @@ func TestEvalCreateTable(t *testing.T) {
 			}
 			if columns[i].Type != expectedColumns[i].Type {
 				t.Fatalf("expected column type %s. got=%s", expectedColumns[i].Type, columns[i].Type)
+			}
+		}
+	}
+}
+
+func TestEvalInsert(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedValues []object.Object
+	}{
+		{
+			"insert into foo values ('abc', 1, 3.14)",
+			[]object.Object{
+				&object.String{Value: "abc"},
+				&object.Integer{Value: 1},
+				&object.Float{Value: 3.14},
+			},
+		},
+	}
+	for _, tt := range tests {
+		backend := newTestBackend()
+		backend.tables["foo"] = []object.Column{
+			{Name: "a", Type: object.DataType("TEXT")},
+			{Name: "b", Type: object.DataType("INTEGER")},
+			{Name: "c", Type: object.DataType("DOUBLE")},
+		}
+		evaluated := testEval(backend, tt.input)
+		if _, ok := evaluated.(*object.OK); !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
+			t.Fatalf("object is not OK. got=%T", evaluated)
+		}
+		rows, ok := backend.rows["foo"]
+		if !ok {
+			t.Fatalf("row doesn't exist")
+		}
+		if len(rows) != 1 {
+			t.Fatalf("expected table to have %d rows. got=%d", 1, len(rows))
+		}
+		for i := range tt.expectedValues {
+			if rows[0].Values[i].Type() != tt.expectedValues[i].Type() {
+				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Type(), rows[0].Values[i].Type())
+			}
+			if rows[0].Values[i].Inspect() != tt.expectedValues[i].Inspect() {
+				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Inspect(), rows[0].Values[i].Inspect())
 			}
 		}
 	}
