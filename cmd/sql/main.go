@@ -64,6 +64,10 @@ func (tb *Backend) CreateTable(name string, columns []object.Column) error {
 	return fmt.Errorf("no support for tables yet")
 }
 
+func (tb *Backend) InsertInto(name string, row object.Row) error {
+	return fmt.Errorf("no support for tables yet")
+}
+
 func NewBackend() *Backend {
 	return &Backend{}
 }
