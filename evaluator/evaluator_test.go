@@ -1,6 +1,7 @@
 package evaluator_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -215,6 +216,9 @@ type testBackend struct {
 }
 
 func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
+	if _, ok := tb.tables[name]; ok {
+		return fmt.Errorf(`relation "%s" already exists`, name)
+	}
 	tb.tables[name] = columns
 	return nil
 }
