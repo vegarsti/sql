@@ -9,6 +9,7 @@ import (
 
 	"github.com/vegarsti/sql/evaluator"
 	"github.com/vegarsti/sql/lexer"
+	"github.com/vegarsti/sql/object"
 	"github.com/vegarsti/sql/parser"
 )
 
@@ -17,6 +18,8 @@ const PROMPT = ">> "
 func Start(in io.Reader, out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
 	scanner := bufio.NewScanner(in)
+
+	backend := NewBackend()
 
 	for {
 		fmt.Print(PROMPT)
@@ -35,7 +38,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(backend, program)
 		if evaluated != nil {
 			w.Write([]byte(evaluated.Inspect()))
 			w.Write([]byte("\n"))
@@ -52,4 +55,15 @@ func printParserErrors(out io.Writer, errors []string) {
 
 func main() {
 	Start(os.Stdin, os.Stdout)
+}
+
+type Backend struct {
+}
+
+func (tb *Backend) CreateTable(name string, columns []object.Column) error {
+	return fmt.Errorf("no support for tables yet")
+}
+
+func NewBackend() *Backend {
+	return &Backend{}
 }
