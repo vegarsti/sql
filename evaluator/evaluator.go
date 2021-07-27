@@ -93,7 +93,7 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 		i++
 	}
 	if err := backend.CreateTable(cst.Name, columns); err != nil {
-		return newError(fmt.Errorf("create table: %w", err).Error())
+		return newError(err.Error())
 	}
 	return &object.OK{}
 }
