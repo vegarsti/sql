@@ -82,6 +82,15 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.INTEGER {
 				return token.Token{Type: token.INTEGER, Literal: token.INTEGER}
 			}
+			if strings.ToUpper(tok.Literal) == token.INSERT {
+				return token.Token{Type: token.INSERT, Literal: token.INSERT}
+			}
+			if strings.ToUpper(tok.Literal) == token.INTO {
+				return token.Token{Type: token.INTO, Literal: token.INTO}
+			}
+			if strings.ToUpper(tok.Literal) == token.VALUES {
+				return token.Token{Type: token.VALUES, Literal: token.VALUES}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)

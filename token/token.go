@@ -28,6 +28,9 @@ const (
 	AS     = "AS"
 	CREATE = "CREATE"
 	TABLE  = "TABLE"
+	INSERT = "INSERT"
+	INTO   = "INTO"
+	VALUES = "VALUES"
 
 	// Types
 	TEXT    = "TEXT"
