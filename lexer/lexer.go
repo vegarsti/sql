@@ -91,6 +91,9 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.VALUES {
 				return token.Token{Type: token.VALUES, Literal: token.VALUES}
 			}
+			if strings.ToUpper(tok.Literal) == token.FROM {
+				return token.Token{Type: token.FROM, Literal: token.FROM}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
