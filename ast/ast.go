@@ -26,6 +26,7 @@ type SelectStatement struct {
 	Token       token.Token // the SELECT token
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
+	From        string
 }
 
 func (es *SelectStatement) statementNode()       {}

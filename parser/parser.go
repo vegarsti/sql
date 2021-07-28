@@ -214,6 +214,17 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 		p.nextToken() // advance to next token
 	}
 
+	if p.curToken.Type == token.FROM {
+		p.nextToken()
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.From = p.curToken.Literal
+		p.nextToken()
+	}
+
 	return stmt
 }
 
