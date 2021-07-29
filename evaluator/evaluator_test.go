@@ -233,6 +233,14 @@ func (tb *testBackend) InsertInto(name string, row object.Row) error {
 	return nil
 }
 
+func (tb *testBackend) Rows(name string, columns []string) ([]object.Row, error) {
+	rows, ok := tb.rows[name]
+	if !ok {
+		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
+	}
+	return rows, nil
+}
+
 func newTestBackend() *testBackend {
 	return &testBackend{
 		tables: make(map[string][]object.Column),
@@ -324,5 +332,42 @@ func TestEvalInsert(t *testing.T) {
 				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Inspect(), rows[0].Values[i].Inspect())
 			}
 		}
+	}
+}
+
+func TestEvalSelectFrom(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{
+			"select a, b from foo",
+			[]string{"abc", "def"},
+		},
+	}
+	for _, tt := range tests {
+		backend := newTestBackend()
+		backend.tables["foo"] = []object.Column{
+			{Name: "a", Type: object.DataType("TEXT")},
+		}
+		backend.rows["foo"] = []object.Row{{
+			Values: []object.Object{
+				&object.String{Value: "abc"},
+				&object.String{Value: "def"},
+			},
+		}}
+		evaluated := testEval(backend, tt.input)
+		row, ok := evaluated.(*object.Row)
+		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
+			t.Fatalf("object is not Row. got=%T", evaluated)
+		}
+		if len(row.Values) != len(tt.expected) {
+			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected), len(row.Values))
+		}
+		testStringObject(t, row.Values[0], tt.expected[0])
+		testStringObject(t, row.Values[1], tt.expected[1])
 	}
 }

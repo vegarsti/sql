@@ -10,6 +10,7 @@ import (
 type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
+	Rows(string, []string) ([]object.Row, error) // the table to fetch rows from, and the subset of rows
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -17,7 +18,7 @@ func Eval(backend Backend, node ast.Node) object.Object {
 	case *ast.Program:
 		return evalStatements(backend, node.Statements)
 	case *ast.SelectStatement:
-		return evalSelectStatement(backend, node.Expressions, node.Aliases)
+		return evalSelectStatement(backend, node)
 	case *ast.CreateTableStatement:
 		return evalCreateTableStatement(backend, node)
 	case *ast.InsertStatement:
@@ -66,17 +67,39 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	return result
 }
 
-func evalSelectStatement(backend Backend, expressions []ast.Expression, aliases []string) object.Object {
+func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
 	row := &object.Row{
-		Aliases: aliases,
-		Values:  make([]object.Object, len(expressions)),
+		Aliases: ss.Aliases,
+		Values:  make([]object.Object, len(ss.Expressions)),
 	}
-	for i, n := range aliases {
+	for i, n := range ss.Aliases {
 		if n == "" {
-			aliases[i] = "?column?"
+			ss.Aliases[i] = "?column?"
 		}
 	}
-	for i, e := range expressions {
+	// fetch rows if selecting from a table
+	var rows []object.Row
+	var err error
+	if ss.From != "" {
+		columnsToFetch := make([]string, 0)
+		for _, e := range ss.Expressions {
+			if identifier, ok := e.(*ast.Identifier); ok {
+				columnsToFetch = append(columnsToFetch, identifier.String())
+			}
+		}
+		rows, err = backend.Rows(ss.From, columnsToFetch)
+		if err != nil {
+			return newError(err.Error())
+		}
+	}
+
+	rowIndex := 0
+	for i, e := range ss.Expressions {
+		if _, ok := e.(*ast.Identifier); ok && ss.From != "" {
+			row.Values[i] = rows[0].Values[rowIndex]
+			rowIndex++
+			continue
+		}
 		row.Values[i] = Eval(backend, e)
 		if isError(row.Values[i]) {
 			return row.Values[i]
