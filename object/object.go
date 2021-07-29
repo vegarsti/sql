@@ -9,6 +9,7 @@ type ObjectType string
 
 const (
 	ROW_OBJ     = "ROW"
+	RESULT_OBJ  = "RESULT"
 	INTEGER_OBJ = "INTEGER"
 	FLOAT_OBJ   = "FLOAT"
 	STRING_OBJ  = "STRING"
@@ -31,12 +32,27 @@ func (r *Row) Inspect() string {
 	for i, v := range r.Values {
 		values[i] = v.Inspect()
 	}
-	return strings.Join([]string{
-		strings.Join(r.Aliases, "\t"),
-		strings.Join(values, "\t"),
-	}, "\n")
+	return strings.Join(values, "\t")
 }
 func (r *Row) Type() ObjectType { return ROW_OBJ }
+
+type Result struct {
+	Aliases []string
+	Rows    []*Row
+}
+
+func (r *Result) Inspect() string {
+	rows := make([]string, len(r.Rows))
+	for i, v := range r.Rows {
+		rows[i] = v.Inspect()
+	}
+	allRowsString := strings.Join(rows, "\n")
+	return strings.Join([]string{
+		strings.Join(r.Aliases, "\t"),
+		allRowsString,
+	}, "\n")
+}
+func (r *Result) Type() ObjectType { return RESULT_OBJ }
 
 type DataType string
 

@@ -35,10 +35,14 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
-		row, ok := evaluated.(*object.Row)
+		result, ok := evaluated.(*object.Result)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", evaluated)
+			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
 		}
@@ -81,10 +85,14 @@ func TestEvalFloatExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
-		row, ok := evaluated.(*object.Row)
+		result, ok := evaluated.(*object.Result)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", evaluated)
+			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
 		}
@@ -117,10 +125,14 @@ func TestEvalStringExpression(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
-		row, ok := evaluated.(*object.Row)
+		result, ok := evaluated.(*object.Result)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", evaluated)
+			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
 		if len(row.Values) != 1 {
 			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
 		}
@@ -181,10 +193,14 @@ func TestEvalSelectMultiple(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
-		row, ok := evaluated.(*object.Row)
+		result, ok := evaluated.(*object.Result)
 		if !ok {
-			t.Fatalf("object is not Row. got=%T", evaluated)
+			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
 		if len(row.Values) != 4 {
 			t.Fatalf("expected row.Values to contain 4 elements. got=%d", len(row.Values))
 		}
