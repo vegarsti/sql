@@ -373,13 +373,17 @@ func TestEvalSelectFrom(t *testing.T) {
 			},
 		}}
 		evaluated := testEval(backend, tt.input)
-		row, ok := evaluated.(*object.Row)
+		result, ok := evaluated.(*object.Result)
 		if !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
 				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
 			}
-			t.Fatalf("object is not Row. got=%T", evaluated)
+			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
 		if len(row.Values) != len(tt.expected) {
 			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected), len(row.Values))
 		}
