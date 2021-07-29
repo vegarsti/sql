@@ -82,7 +82,11 @@ func evalSelectStatement(backend Backend, expressions []ast.Expression, aliases 
 			return row.Values[i]
 		}
 	}
-	return row
+	rows := &object.Result{
+		Aliases: aliases,
+		Rows:    []*object.Row{row},
+	}
+	return rows
 }
 
 func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {
