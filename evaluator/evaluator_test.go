@@ -249,6 +249,13 @@ func (tb *testBackend) InsertInto(name string, row object.Row) error {
 		return fmt.Errorf(`relation "%s" does not exist`, name)
 	}
 	tb.rows[name] = append(tb.rows[name], row)
+	// Populate aliases
+	for i := range tb.rows[name] {
+		tb.rows[name][i].Aliases = make([]string, len(tb.tables[name]))
+		for j, column := range tb.tables[name] {
+			tb.rows[name][i].Aliases[j] = column.Name
+		}
+	}
 	return nil
 }
 
@@ -349,6 +356,11 @@ func TestEvalInsert(t *testing.T) {
 			}
 			if rows[0].Values[i].Inspect() != tt.expectedValues[i].Inspect() {
 				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Inspect(), rows[0].Values[i].Inspect())
+			}
+			expectedAliases := "a, b, c"
+			gotAliases := strings.Join(rows[0].Aliases, ", ")
+			if gotAliases != expectedAliases {
+				t.Fatalf("expected aliases to be %s. got=%s", expectedAliases, gotAliases)
 			}
 		}
 	}
