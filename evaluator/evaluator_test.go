@@ -37,6 +37,9 @@ func TestEvalIntegerExpression(t *testing.T) {
 		evaluated := testEval(newTestBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
 		if len(result.Rows) != 1 {

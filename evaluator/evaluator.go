@@ -23,18 +23,28 @@ func Eval(backend Backend, node ast.Node) object.Object {
 		return evalCreateTableStatement(backend, node)
 	case *ast.InsertStatement:
 		return evalInsertStatement(backend, node)
+	default:
+		if expression, ok := node.(ast.Expression); ok {
+			return evalExpression(object.Row{}, expression)
+		}
+		return newError("unknown node type %T", node)
+	}
+}
+
+func evalExpression(row object.Row, node ast.Expression) object.Object {
+	switch node := node.(type) {
 	case *ast.PrefixExpression:
-		right := Eval(backend, node.Right)
+		right := evalExpression(row, node.Right)
 		if isError(right) {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left := Eval(backend, node.Left)
+		left := evalExpression(row, node.Left)
 		if isError(left) {
 			return left
 		}
-		right := Eval(backend, node.Right)
+		right := evalExpression(row, node.Right)
 		if isError(right) {
 			return right
 		}
@@ -52,7 +62,7 @@ func Eval(backend Backend, node ast.Node) object.Object {
 		}
 		return newError("no such column: %s", node.Value)
 	default:
-		return newError("unknown node type %T", node)
+		return newError("unknown expression type %T", node)
 	}
 }
 
@@ -93,14 +103,8 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 	}
 
-	rowIndex := 0
 	for i, e := range ss.Expressions {
-		if _, ok := e.(*ast.Identifier); ok && ss.From != "" {
-			row.Values[i] = rows[0].Values[rowIndex]
-			rowIndex++
-			continue
-		}
-		row.Values[i] = Eval(backend, e)
+		row.Values[i] = evalExpression(rows[0], e)
 		if isError(row.Values[i]) {
 			return row.Values[i]
 		}
