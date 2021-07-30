@@ -357,11 +357,28 @@ func TestEvalInsert(t *testing.T) {
 func TestEvalSelectFrom(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected []string
+		expected [][]string
 	}{
 		{
 			"select a, b from foo",
-			[]string{"abc", "def"},
+			[][]string{
+				{"abc", "def"},
+				{"bcd", "efg"},
+			},
+		},
+		{
+			"select a from foo",
+			[][]string{
+				{"abc"},
+				{"bcd"},
+			},
+		},
+		{
+			"select b from foo",
+			[][]string{
+				{"def"},
+				{"efg"},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -369,13 +386,22 @@ func TestEvalSelectFrom(t *testing.T) {
 		backend.tables["foo"] = []object.Column{
 			{Name: "a", Type: object.DataType("TEXT")},
 		}
-		backend.rows["foo"] = []object.Row{{
-			Values: []object.Object{
-				&object.String{Value: "abc"},
-				&object.String{Value: "def"},
+		backend.rows["foo"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "abc"},
+					&object.String{Value: "def"},
+				},
+				Aliases: []string{"a", "b"},
 			},
-			Aliases: []string{"a", "b"},
-		}}
+			{
+				Values: []object.Object{
+					&object.String{Value: "bcd"},
+					&object.String{Value: "efg"},
+				},
+				Aliases: []string{"a", "b"},
+			},
+		}
 		evaluated := testEval(backend, tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
@@ -384,14 +410,22 @@ func TestEvalSelectFrom(t *testing.T) {
 			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
-		if len(result.Rows) != 1 {
-			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		if len(result.Rows) != len(backend.rows["foo"]) {
+			t.Fatalf("expected result to contain %d rows. got=%d", len(backend.rows["foo"]), len(result.Rows))
 		}
-		row := result.Rows[0]
-		if len(row.Values) != len(tt.expected) {
-			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected), len(row.Values))
+		row1 := result.Rows[0]
+		if len(row1.Values) != len(tt.expected[0]) {
+			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
 		}
-		testStringObject(t, row.Values[0], tt.expected[0])
-		testStringObject(t, row.Values[1], tt.expected[1])
+		for i := range row1.Values {
+			testStringObject(t, row1.Values[i], tt.expected[0][i])
+		}
+		row2 := result.Rows[1]
+		if len(row2.Values) != len(tt.expected[1]) {
+			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[1]), len(row1.Values))
+		}
+		for i := range row2.Values {
+			testStringObject(t, row2.Values[i], tt.expected[1][i])
+		}
 	}
 }

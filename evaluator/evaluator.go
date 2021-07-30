@@ -81,15 +81,6 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 }
 
 func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
-	row := &object.Row{
-		Aliases: ss.Aliases,
-		Values:  make([]object.Object, len(ss.Expressions)),
-	}
-	for i, n := range ss.Aliases {
-		if n == "" {
-			ss.Aliases[i] = "?column?"
-		}
-	}
 	// fetch rows if selecting from a table
 	var rows []object.Row
 	var err error
@@ -100,19 +91,35 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 	}
 
-	var rowFromBackend object.Row
-	for i, e := range ss.Expressions {
-		if len(rows) != 0 {
-			rowFromBackend = rows[0]
+	// iterate over rows from backend (or a dummy row if not selecting from a table)
+	// and evaluate the expression for each row
+	if len(rows) == 0 {
+		rows = []object.Row{{}}
+	}
+	rowsToReturn := make([]*object.Row, 0)
+	for _, backendRow := range rows {
+		row := &object.Row{
+			Aliases: ss.Aliases,
+			Values:  make([]object.Object, len(ss.Expressions)),
 		}
-		row.Values[i] = evalExpression(rowFromBackend, e)
-		if isError(row.Values[i]) {
-			return row.Values[i]
+		for i, e := range ss.Expressions {
+			row.Values[i] = evalExpression(backendRow, e)
+			if isError(row.Values[i]) {
+				return row.Values[i]
+			}
+		}
+		rowsToReturn = append(rowsToReturn, row)
+	}
+	// Populate aliases for anonymous columns
+	aliases := ss.Aliases
+	for i, n := range ss.Aliases {
+		if n == "" {
+			aliases[i] = "?column?"
 		}
 	}
 	result := &object.Result{
-		Aliases: ss.Aliases,
-		Rows:    []*object.Row{row},
+		Aliases: aliases,
+		Rows:    rowsToReturn,
 	}
 	return result
 }
