@@ -10,7 +10,7 @@ import (
 type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
-	Rows(string, []string) ([]object.Row, error) // the table to fetch rows from, and the subset of rows
+	Rows(string) ([]object.Row, error) // the table to fetch rows from, and the subset of rows
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -94,13 +94,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	var rows []object.Row
 	var err error
 	if ss.From != "" {
-		columnsToFetch := make([]string, 0)
-		for _, e := range ss.Expressions {
-			if identifier, ok := e.(*ast.Identifier); ok {
-				columnsToFetch = append(columnsToFetch, identifier.String())
-			}
-		}
-		rows, err = backend.Rows(ss.From, columnsToFetch)
+		rows, err = backend.Rows(ss.From)
 		if err != nil {
 			return newError(err.Error())
 		}

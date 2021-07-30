@@ -252,7 +252,7 @@ func (tb *testBackend) InsertInto(name string, row object.Row) error {
 	return nil
 }
 
-func (tb *testBackend) Rows(name string, columns []string) ([]object.Row, error) {
+func (tb *testBackend) Rows(name string) ([]object.Row, error) {
 	rows, ok := tb.rows[name]
 	if !ok {
 		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
