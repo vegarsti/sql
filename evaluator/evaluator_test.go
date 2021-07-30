@@ -368,8 +368,9 @@ func TestEvalInsert(t *testing.T) {
 
 func TestEvalSelectFrom(t *testing.T) {
 	tests := []struct {
-		input    string
-		expected [][]string
+		input           string
+		expected        [][]string
+		expectedAliases string
 	}{
 		{
 			"select a, b from foo",
@@ -377,6 +378,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				{"abc", "def"},
 				{"bcd", "efg"},
 			},
+			"a, b",
 		},
 		{
 			"select a from foo",
@@ -384,6 +386,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				{"abc"},
 				{"bcd"},
 			},
+			"a",
 		},
 		{
 			"select b from foo",
@@ -391,6 +394,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				{"def"},
 				{"efg"},
 			},
+			"b",
 		},
 	}
 	for _, tt := range tests {
@@ -438,6 +442,11 @@ func TestEvalSelectFrom(t *testing.T) {
 		}
 		for i := range row2.Values {
 			testStringObject(t, row2.Values[i], tt.expected[1][i])
+		}
+
+		gotAliases := strings.Join(result.Aliases, ", ")
+		if gotAliases != tt.expectedAliases {
+			t.Fatalf("expected aliases %s. got=%s", tt.expectedAliases, gotAliases)
 		}
 	}
 }

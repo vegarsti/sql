@@ -97,12 +97,17 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		rows = []object.Row{{}}
 	}
 	rowsToReturn := make([]*object.Row, 0)
+	aliases := ss.Aliases
 	for _, backendRow := range rows {
 		row := &object.Row{
 			Aliases: ss.Aliases,
 			Values:  make([]object.Object, len(ss.Expressions)),
 		}
 		for i, e := range ss.Expressions {
+			// Populate aliases if the expression is just a column
+			if columnIdentifier, ok := e.(*ast.Identifier); ok {
+				aliases[i] = columnIdentifier.Value
+			}
 			row.Values[i] = evalExpression(backendRow, e)
 			if isError(row.Values[i]) {
 				return row.Values[i]
@@ -110,10 +115,9 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 		rowsToReturn = append(rowsToReturn, row)
 	}
-	// Populate aliases for anonymous columns
-	aliases := ss.Aliases
-	for i, n := range ss.Aliases {
-		if n == "" {
+	// Populate aliases
+	for i, alias := range ss.Aliases {
+		if alias == "" {
 			aliases[i] = "?column?"
 		}
 	}
