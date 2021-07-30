@@ -374,6 +374,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				&object.String{Value: "abc"},
 				&object.String{Value: "def"},
 			},
+			Aliases: []string{"a", "b"},
 		}}
 		evaluated := testEval(backend, tt.input)
 		result, ok := evaluated.(*object.Result)

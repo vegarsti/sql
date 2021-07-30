@@ -56,9 +56,12 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
 	case *ast.Identifier:
-		environment := map[string]object.Object{}
-		if value, ok := environment[node.Value]; ok {
-			return value
+		if row.Values != nil && row.Aliases != nil {
+			for i := range row.Values {
+				if row.Aliases[i] == node.Value {
+					return row.Values[i]
+				}
+			}
 		}
 		return newError("no such column: %s", node.Value)
 	default:
@@ -103,8 +106,12 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 	}
 
+	var rowFromBackend object.Row
 	for i, e := range ss.Expressions {
-		row.Values[i] = evalExpression(rows[0], e)
+		if len(rows) != 0 {
+			rowFromBackend = rows[0]
+		}
+		row.Values[i] = evalExpression(rowFromBackend, e)
 		if isError(row.Values[i]) {
 			return row.Values[i]
 		}
