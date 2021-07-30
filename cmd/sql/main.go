@@ -19,7 +19,7 @@ func Start(in io.Reader, out io.Writer) {
 	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
 	scanner := bufio.NewScanner(in)
 
-	backend := NewBackend()
+	backend := newTestBackend()
 
 	for {
 		fmt.Print(PROMPT)
@@ -57,21 +57,46 @@ func main() {
 	Start(os.Stdin, os.Stdout)
 }
 
-type Backend struct {
+type testBackend struct {
+	tables map[string][]object.Column
+	rows   map[string][]object.Row
 }
 
-func (tb *Backend) CreateTable(name string, columns []object.Column) error {
-	return fmt.Errorf("no support for tables yet")
+func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
+	if _, ok := tb.tables[name]; ok {
+		return fmt.Errorf(`relation "%s" already exists`, name)
+	}
+	tb.tables[name] = columns
+	tb.rows[name] = make([]object.Row, 0)
+	return nil
 }
 
-func (tb *Backend) InsertInto(name string, row object.Row) error {
-	return fmt.Errorf("no support for tables yet")
+func (tb *testBackend) InsertInto(name string, row object.Row) error {
+	if _, ok := tb.tables[name]; !ok {
+		return fmt.Errorf(`relation "%s" does not exist`, name)
+	}
+	tb.rows[name] = append(tb.rows[name], row)
+	// Populate aliases
+	for i := range tb.rows[name] {
+		tb.rows[name][i].Aliases = make([]string, len(tb.tables[name]))
+		for j, column := range tb.tables[name] {
+			tb.rows[name][i].Aliases[j] = column.Name
+		}
+	}
+	return nil
 }
 
-func (tb *Backend) Rows(name string) ([]object.Row, error) {
-	return nil, fmt.Errorf("no support for tables yet")
+func (tb *testBackend) Rows(name string) ([]object.Row, error) {
+	rows, ok := tb.rows[name]
+	if !ok {
+		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
+	}
+	return rows, nil
 }
 
-func NewBackend() *Backend {
-	return &Backend{}
+func newTestBackend() *testBackend {
+	return &testBackend{
+		tables: make(map[string][]object.Column),
+		rows:   make(map[string][]object.Row),
+	}
 }
