@@ -191,7 +191,7 @@ func TestEvalSelectMultiple(t *testing.T) {
 		{
 			"select 'abc', 1 as n, 3.14 as pi, -1",
 			[]interface{}{"abc", int64(1), float64(3.14), int64(-1)},
-			[]string{"?column?", "n", "pi", "?column?"},
+			[]string{"abc", "n", "pi", "(-1)"},
 		},
 	}
 	for _, tt := range tests {
