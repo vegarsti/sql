@@ -551,3 +551,43 @@ func TestInsert(t *testing.T) {
 		}
 	}
 }
+
+func TestSelectFrom(t *testing.T) {
+	input := "select a from foo"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral := "a"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Fatalf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	}
+
+	expectedFrom := "foo"
+	if stmt.From != expectedFrom {
+		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	}
+}

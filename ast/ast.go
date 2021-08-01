@@ -26,6 +26,7 @@ type SelectStatement struct {
 	Token       token.Token // the SELECT token
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
+	From        string
 }
 
 func (es *SelectStatement) statementNode()       {}
@@ -124,7 +125,7 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
-func (sl *StringLiteral) String() string       { return sl.Token.Literal }
+func (sl *StringLiteral) String() string       { return "'" + sl.Token.Literal + "'" }
 
 type Identifier struct {
 	Token token.Token

@@ -37,6 +37,9 @@ func TestEvalIntegerExpression(t *testing.T) {
 		evaluated := testEval(newTestBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
 		if len(result.Rows) != 1 {
@@ -188,7 +191,7 @@ func TestEvalSelectMultiple(t *testing.T) {
 		{
 			"select 'abc', 1 as n, 3.14 as pi, -1",
 			[]interface{}{"abc", int64(1), float64(3.14), int64(-1)},
-			[]string{"?column?", "n", "pi", "?column?"},
+			[]string{"'abc'", "n", "pi", "(-1)"},
 		},
 	}
 	for _, tt := range tests {
@@ -246,7 +249,22 @@ func (tb *testBackend) InsertInto(name string, row object.Row) error {
 		return fmt.Errorf(`relation "%s" does not exist`, name)
 	}
 	tb.rows[name] = append(tb.rows[name], row)
+	// Populate aliases
+	for i := range tb.rows[name] {
+		tb.rows[name][i].Aliases = make([]string, len(tb.tables[name]))
+		for j, column := range tb.tables[name] {
+			tb.rows[name][i].Aliases[j] = column.Name
+		}
+	}
 	return nil
+}
+
+func (tb *testBackend) Rows(name string) ([]object.Row, error) {
+	rows, ok := tb.rows[name]
+	if !ok {
+		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
+	}
+	return rows, nil
 }
 
 func newTestBackend() *testBackend {
@@ -339,6 +357,96 @@ func TestEvalInsert(t *testing.T) {
 			if rows[0].Values[i].Inspect() != tt.expectedValues[i].Inspect() {
 				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Inspect(), rows[0].Values[i].Inspect())
 			}
+			expectedAliases := "a, b, c"
+			gotAliases := strings.Join(rows[0].Aliases, ", ")
+			if gotAliases != expectedAliases {
+				t.Fatalf("expected aliases to be %s. got=%s", expectedAliases, gotAliases)
+			}
+		}
+	}
+}
+
+func TestEvalSelectFrom(t *testing.T) {
+	tests := []struct {
+		input           string
+		expected        [][]string
+		expectedAliases string
+	}{
+		{
+			"select a, b from foo",
+			[][]string{
+				{"abc", "def"},
+				{"bcd", "efg"},
+			},
+			"a, b",
+		},
+		{
+			"select a from foo",
+			[][]string{
+				{"abc"},
+				{"bcd"},
+			},
+			"a",
+		},
+		{
+			"select b from foo",
+			[][]string{
+				{"def"},
+				{"efg"},
+			},
+			"b",
+		},
+	}
+	for _, tt := range tests {
+		backend := newTestBackend()
+		backend.tables["foo"] = []object.Column{
+			{Name: "a", Type: object.DataType("TEXT")},
+		}
+		backend.rows["foo"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "abc"},
+					&object.String{Value: "def"},
+				},
+				Aliases: []string{"a", "b"},
+			},
+			{
+				Values: []object.Object{
+					&object.String{Value: "bcd"},
+					&object.String{Value: "efg"},
+				},
+				Aliases: []string{"a", "b"},
+			},
+		}
+		evaluated := testEval(backend, tt.input)
+		result, ok := evaluated.(*object.Result)
+		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
+			t.Fatalf("object is not Result. got=%T", evaluated)
+		}
+		if len(result.Rows) != len(backend.rows["foo"]) {
+			t.Fatalf("expected result to contain %d rows. got=%d", len(backend.rows["foo"]), len(result.Rows))
+		}
+		row1 := result.Rows[0]
+		if len(row1.Values) != len(tt.expected[0]) {
+			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
+		}
+		for i := range row1.Values {
+			testStringObject(t, row1.Values[i], tt.expected[0][i])
+		}
+		row2 := result.Rows[1]
+		if len(row2.Values) != len(tt.expected[1]) {
+			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[1]), len(row1.Values))
+		}
+		for i := range row2.Values {
+			testStringObject(t, row2.Values[i], tt.expected[1][i])
+		}
+
+		gotAliases := strings.Join(result.Aliases, ", ")
+		if gotAliases != tt.expectedAliases {
+			t.Fatalf("expected aliases %s. got=%s", tt.expectedAliases, gotAliases)
 		}
 	}
 }

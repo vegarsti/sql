@@ -10,6 +10,7 @@ import (
 type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
+	Rows(string) ([]object.Row, error)
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -17,7 +18,7 @@ func Eval(backend Backend, node ast.Node) object.Object {
 	case *ast.Program:
 		return evalStatements(backend, node.Statements)
 	case *ast.SelectStatement:
-		return evalSelectStatement(backend, node.Expressions, node.Aliases)
+		return evalSelectStatement(backend, node)
 	case *ast.CreateTableStatement:
 		return evalCreateTableStatement(backend, node)
 	case *ast.InsertStatement:
@@ -55,9 +56,12 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
 	case *ast.Identifier:
-		environment := map[string]object.Object{}
-		if value, ok := environment[node.Value]; ok {
-			return value
+		if row.Values != nil && row.Aliases != nil {
+			for i := range row.Values {
+				if row.Aliases[i] == node.Value {
+					return row.Values[i]
+				}
+			}
 		}
 		return newError("no such column: %s", node.Value)
 	default:
@@ -76,27 +80,48 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	return result
 }
 
-func evalSelectStatement(backend Backend, expressions []ast.Expression, aliases []string) object.Object {
-	row := &object.Row{
-		Aliases: aliases,
-		Values:  make([]object.Object, len(expressions)),
-	}
-	for i, n := range aliases {
-		if n == "" {
-			aliases[i] = "?column?"
+func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
+	// fetch rows if selecting from a table
+	var rows []object.Row
+	var err error
+	if ss.From != "" {
+		rows, err = backend.Rows(ss.From)
+		if err != nil {
+			return newError(err.Error())
 		}
 	}
-	for i, e := range expressions {
-		row.Values[i] = evalExpression(object.Row{}, e)
-		if isError(row.Values[i]) {
-			return row.Values[i]
+
+	// iterate over rows from backend (or a dummy row if not selecting from a table)
+	// and evaluate the expression for each row
+	if len(rows) == 0 {
+		rows = []object.Row{{}}
+	}
+	rowsToReturn := make([]*object.Row, 0)
+	aliases := ss.Aliases
+	for _, backendRow := range rows {
+		row := &object.Row{
+			Aliases: ss.Aliases,
+			Values:  make([]object.Object, len(ss.Expressions)),
+		}
+		for i, e := range ss.Expressions {
+			row.Values[i] = evalExpression(backendRow, e)
+			if isError(row.Values[i]) {
+				return row.Values[i]
+			}
+		}
+		rowsToReturn = append(rowsToReturn, row)
+	}
+	// Populate aliases
+	for i, alias := range ss.Aliases {
+		if alias == "" {
+			aliases[i] = ss.Expressions[i].String()
 		}
 	}
-	rows := &object.Result{
+	result := &object.Result{
 		Aliases: aliases,
-		Rows:    []*object.Row{row},
+		Rows:    rowsToReturn,
 	}
-	return rows
+	return result
 }
 
 func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {

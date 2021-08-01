@@ -214,6 +214,17 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 		p.nextToken() // advance to next token
 	}
 
+	if p.curToken.Type == token.FROM {
+		p.nextToken()
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.From = p.curToken.Literal
+		p.nextToken()
+	}
+
 	return stmt
 }
 
@@ -250,7 +261,7 @@ func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
 
 	// assert next token is a column type
 	if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER) {
-		p.errors = append(p.errors, fmt.Sprintf("expected type, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 		return nil
 	}
 	p.nextToken()
@@ -268,7 +279,7 @@ func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
 
 		// assert next token is a column type
 		if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER) {
-			p.errors = append(p.errors, fmt.Sprintf("expected type, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+			p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 			return nil
 		}
 		p.nextToken()

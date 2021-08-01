@@ -31,6 +31,7 @@ const (
 	INSERT = "INSERT"
 	INTO   = "INTO"
 	VALUES = "VALUES"
+	FROM   = "FROM"
 
 	// Types
 	TEXT    = "TEXT"
