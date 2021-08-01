@@ -10,7 +10,7 @@ import (
 type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
-	Rows(string) ([]object.Row, error) // the table to fetch rows from, and the subset of rows
+	Rows(string) ([]object.Row, error)
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
