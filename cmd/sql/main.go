@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"text/tabwriter"
 
+	"github.com/chzyer/readline"
 	"github.com/vegarsti/sql/evaluator"
 	"github.com/vegarsti/sql/lexer"
 	"github.com/vegarsti/sql/object"
@@ -15,26 +15,27 @@ import (
 
 const PROMPT = ">> "
 
-func Start(in io.Reader, out io.Writer) {
-	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
-	scanner := bufio.NewScanner(in)
-
+func Start(r *readline.Instance) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	backend := newTestBackend()
 
 	for {
-		fmt.Print(PROMPT)
-		scanned := scanner.Scan()
-		if !scanned {
-			return
+		line, err := r.Readline()
+		if err == readline.ErrInterrupt {
+			if len(line) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
+			break
 		}
-
-		line := scanner.Text()
 		l := lexer.New(line)
 		p := parser.New(l)
 
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
-			printParserErrors(out, p.Errors())
+			printParserErrors(os.Stdout, p.Errors())
 			continue
 		}
 
@@ -54,7 +55,12 @@ func printParserErrors(out io.Writer, errors []string) {
 }
 
 func main() {
-	Start(os.Stdin, os.Stdout)
+	r, err := readline.New(">> ")
+	if err != nil {
+		panic(err)
+	}
+	defer r.Close()
+	Start(r)
 }
 
 type testBackend struct {
