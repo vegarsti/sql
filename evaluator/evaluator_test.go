@@ -2,6 +2,7 @@ package evaluator_test
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -304,12 +305,28 @@ func TestEvalCreateTable(t *testing.T) {
 		if len(columns) != len(expectedColumns) {
 			t.Fatalf("expected %d columns. got=%d", len(expectedColumns), len(columns))
 		}
+
+		// Assert column lists are equal
+		expectedColumnsMap := make(map[string]object.DataType)
+		expectedColumnsMapKeys := make([]string, len(expectedColumns))
+		for i, s := range expectedColumns {
+			expectedColumnsMap[s.Name] = s.Type
+			expectedColumnsMapKeys[i] = s.Name
+		}
+		sort.Strings(expectedColumnsMapKeys)
+		columnsMap := make(map[string]object.DataType)
+		columnsMapKeys := make([]string, len(columns))
+		for i, s := range columns {
+			columnsMap[s.Name] = s.Type
+			columnsMapKeys[i] = s.Name
+		}
+		sort.Strings(columnsMapKeys)
 		for i := range columns {
-			if columns[i].Name != expectedColumns[i].Name {
-				t.Fatalf("expected column name %s. got=%s", expectedColumns[i].Name, columns[i].Name)
+			if columnsMapKeys[i] != expectedColumnsMapKeys[i] {
+				t.Fatalf("expected column %s. got=%s", expectedColumnsMapKeys[i], columnsMapKeys[i])
 			}
-			if columns[i].Type != expectedColumns[i].Type {
-				t.Fatalf("expected column type %s. got=%s", expectedColumns[i].Type, columns[i].Type)
+			if columnsMap[columnsMapKeys[i]] != expectedColumnsMap[expectedColumnsMapKeys[i]] {
+				t.Fatalf("expected column type %s. got=%s", expectedColumnsMap[expectedColumnsMapKeys[i]], columnsMap[columnsMapKeys[i]])
 			}
 		}
 	}
