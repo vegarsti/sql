@@ -133,7 +133,7 @@ func (l *Lexer) readNumber() token.Token {
 
 func (l *Lexer) readIdentifier() token.Token {
 	position := l.position
-	for isLetter(l.ch) {
+	for isLetter(l.ch) || l.ch == '_' {
 		l.readChar()
 	}
 	return token.Token{
