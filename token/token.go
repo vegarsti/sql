@@ -39,9 +39,10 @@ const (
 	INTEGER = "INTEGER"
 
 	// Delimiters
-	LPAREN = "("
-	RPAREN = ")"
-	DOT    = "."
-	QUOTE  = "'"
-	COMMA  = ","
+	LPAREN    = "("
+	RPAREN    = ")"
+	DOT       = "."
+	QUOTE     = "'"
+	COMMA     = ","
+	SEMICOLON = ";"
 )

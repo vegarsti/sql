@@ -8,7 +8,7 @@ import (
 )
 
 func TestExpressionValue(t *testing.T) {
-	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer insert into values from identifier_with_underscore"
+	input := "1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer insert into values from identifier_with_underscore;"
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -49,6 +49,7 @@ func TestExpressionValue(t *testing.T) {
 		{token.VALUES, "VALUES"},
 		{token.FROM, "FROM"},
 		{token.IDENTIFIER, "identifier_with_underscore"},
+		{token.SEMICOLON, ";"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {
