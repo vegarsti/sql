@@ -21,7 +21,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	}
 
 	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
 	}
 
 	stmt, ok := program.Statements[0].(*ast.SelectStatement)
@@ -589,5 +589,52 @@ func TestSelectFrom(t *testing.T) {
 	expectedFrom := "foo"
 	if stmt.From != expectedFrom {
 		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	}
+}
+
+func TestParseMultipleStatementsOK(t *testing.T) {
+	prefixTest := []struct {
+		input                 string
+		expectedStatementsLen int
+	}{
+		{"select 1;", 1},
+		{"select 1; select 2 as n; select 3", 3},
+		{"insert into foo values ('a', 'b', 'c')", 1},
+		{"insert into foo values ('a', 'b', 'c');", 1},
+		{"insert into foo values ('a', 'b', 'c'); select 1", 2},
+		{"create table foo (a text, b integer, c double);", 1},
+		{"create table foo (a text, b integer, c double); select 1", 2},
+		{"create table foo (a text, b integer, c double); select 1; insert into foo values ('a', 'b', 'c')", 3},
+	}
+	for _, tt := range prefixTest {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		if len(program.Statements) != tt.expectedStatementsLen {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d", tt.expectedStatementsLen, len(program.Statements))
+		}
+	}
+}
+
+func TestParseMultipleStatementsError(t *testing.T) {
+	prefixTest := []struct {
+		input string
+	}{
+		{"select 1 select 2"},
+		{"create table foo (a text, b integer, c double) create table bar (a text, b integer, c double)"},
+		{"insert into foo values ('a', 'b', 'c') insert into foo values ('a', 'b', 'c')"},
+	}
+	for _, tt := range prefixTest {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		errors := p.Errors()
+		if len(errors) != 1 {
+			t.Fatalf("expected 1 parser error, got %d", len(errors))
+		}
+		if len(program.Statements) != 0 {
+			t.Fatalf("program.Statements is not empty. got=%d", len(program.Statements))
+		}
 	}
 }
