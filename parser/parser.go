@@ -97,9 +97,12 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 
 	for p.curToken.Type != token.EOF {
-		if stmt := p.parseStatement(); stmt != nil {
-			program.Statements = append(program.Statements, stmt)
+		stmt := p.parseStatement()
+		// got errors, abort parsing
+		if stmt == nil {
+			return program
 		}
+		program.Statements = append(program.Statements, stmt)
 		p.nextToken()
 	}
 
@@ -165,7 +168,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
-func (p *Parser) parseSelectStatement() *ast.SelectStatement {
+func (p *Parser) parseSelectStatement() ast.Statement {
 	stmt := &ast.SelectStatement{
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
@@ -225,10 +228,16 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 		p.nextToken()
 	}
 
+	if !(p.curToken.Type == token.SEMICOLON || p.curToken.Type == token.EOF) {
+		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
 	return stmt
 }
 
-func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
+func (p *Parser) parseCreateTableStatement() ast.Statement {
 	stmt := &ast.CreateTableStatement{
 		Token:   p.curToken,
 		Columns: make(map[string]token.Token),
@@ -290,10 +299,17 @@ func (p *Parser) parseCreateTableStatement() *ast.CreateTableStatement {
 		return nil
 	}
 
+	if !(p.peekToken.Type == token.SEMICOLON || p.peekToken.Type == token.EOF) {
+		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	p.nextToken()
+
 	return stmt
 }
 
-func (p *Parser) parseInsertStatement() *ast.InsertStatement {
+func (p *Parser) parseInsertStatement() ast.Statement {
 	stmt := &ast.InsertStatement{
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
@@ -341,6 +357,13 @@ func (p *Parser) parseInsertStatement() *ast.InsertStatement {
 	if !p.expectPeek(token.RPAREN) {
 		return nil
 	}
+
+	if !(p.peekToken.Type == token.SEMICOLON || p.peekToken.Type == token.EOF) {
+		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	p.nextToken()
 
 	return stmt
 }
