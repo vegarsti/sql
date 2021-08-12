@@ -96,6 +96,12 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.FROM {
 				return token.Token{Type: token.FROM, Literal: token.FROM}
 			}
+			if strings.ToUpper(tok.Literal) == token.ORDER {
+				return token.Token{Type: token.ORDER, Literal: token.ORDER}
+			}
+			if strings.ToUpper(tok.Literal) == token.BY {
+				return token.Token{Type: token.BY, Literal: token.BY}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)

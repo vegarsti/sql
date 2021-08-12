@@ -32,6 +32,8 @@ const (
 	INTO   = "INTO"
 	VALUES = "VALUES"
 	FROM   = "FROM"
+	ORDER  = "ORDER"
+	BY     = "BY"
 
 	// Types
 	TEXT    = "TEXT"
