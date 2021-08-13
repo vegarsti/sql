@@ -24,7 +24,7 @@ type Expression interface {
 
 type OrderByExpression struct {
 	Expression Expression
-	Ascending  bool
+	Descending bool
 }
 
 type SelectStatement struct {

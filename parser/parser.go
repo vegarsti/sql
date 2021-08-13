@@ -239,16 +239,26 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		if sortExpr == nil {
 			return nil
 		}
-		stmt.OrderBy = append(stmt.OrderBy, ast.OrderByExpression{Expression: sortExpr})
+		orderBy := ast.OrderByExpression{Expression: sortExpr}
 		p.nextToken()
+		if p.curToken.Type == token.DESC {
+			orderBy.Descending = true
+			p.nextToken()
+		}
+		stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		for p.curToken.Type == token.COMMA {
 			p.nextToken() // read comma
 			sortExpr = p.parseExpression(LOWEST)
 			if sortExpr == nil {
 				return nil
 			}
-			stmt.OrderBy = append(stmt.OrderBy, ast.OrderByExpression{Expression: sortExpr})
+			orderBy := ast.OrderByExpression{Expression: sortExpr}
 			p.nextToken()
+			if p.curToken.Type == token.DESC {
+				orderBy.Descending = true
+				p.nextToken()
+			}
+			stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		}
 	}
 
