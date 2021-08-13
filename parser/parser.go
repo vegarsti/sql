@@ -173,6 +173,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
+		OrderBy:     make([]ast.Expression, 0),
 	}
 	p.nextToken() // read SELECT token
 
@@ -228,8 +229,31 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		p.nextToken()
 	}
 
+	if p.curToken.Type == token.ORDER {
+		if !p.expectPeek(token.BY) {
+			return nil
+		}
+		p.nextToken()
+		// The sort expression(s) can be any expression that would be valid in the query's select list. An example is:
+		sortExpr := p.parseExpression(LOWEST)
+		if sortExpr == nil {
+			return nil
+		}
+		stmt.OrderBy = append(stmt.OrderBy, sortExpr)
+		p.nextToken()
+		for p.curToken.Type == token.COMMA {
+			p.nextToken() // read comma
+			sortExpr = p.parseExpression(LOWEST)
+			if sortExpr == nil {
+				return nil
+			}
+			stmt.OrderBy = append(stmt.OrderBy, sortExpr)
+			p.nextToken()
+		}
+	}
+
 	if !(p.curToken.Type == token.SEMICOLON || p.curToken.Type == token.EOF) {
-		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
+		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.curToken.Type, p.curToken.Literal)
 		p.errors = append(p.errors, msg)
 		return nil
 	}

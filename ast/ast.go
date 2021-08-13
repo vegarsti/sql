@@ -27,6 +27,7 @@ type SelectStatement struct {
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
 	From        string
+	OrderBy     []Expression // can be any expression that would be valid in the query's select list
 }
 
 func (es *SelectStatement) statementNode()       {}
