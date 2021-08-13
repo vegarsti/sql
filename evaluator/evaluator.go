@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/vegarsti/sql/ast"
 	"github.com/vegarsti/sql/object"
@@ -100,13 +101,20 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	aliases := ss.Aliases
 	for _, backendRow := range rows {
 		row := &object.Row{
-			Aliases: ss.Aliases,
-			Values:  make([]object.Object, len(ss.Expressions)),
+			Aliases:      ss.Aliases,
+			Values:       make([]object.Object, len(ss.Expressions)),
+			SortByValues: make([]object.Object, len(ss.OrderBy)),
 		}
 		for i, e := range ss.Expressions {
 			row.Values[i] = evalExpression(backendRow, e)
 			if isError(row.Values[i]) {
 				return row.Values[i]
+			}
+		}
+		for i, e := range ss.OrderBy {
+			row.SortByValues[i] = evalExpression(backendRow, e)
+			if isError(row.SortByValues[i]) {
+				return row.SortByValues[i]
 			}
 		}
 		rowsToReturn = append(rowsToReturn, row)
@@ -117,11 +125,28 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			aliases[i] = ss.Expressions[i].String()
 		}
 	}
+	if len(ss.OrderBy) != 0 {
+		sortRows(rowsToReturn)
+	}
 	result := &object.Result{
 		Aliases: aliases,
 		Rows:    rowsToReturn,
 	}
 	return result
+}
+
+func sortRows(rows []*object.Row) {
+	n := len(rows[0].SortByValues) // must be same length for all rows
+	sort.Slice(rows, func(i, j int) bool {
+		for k := 0; k < n; k++ {
+			iValue := rows[i].SortByValues[k].SortValue()
+			jValue := rows[j].SortByValues[k].SortValue()
+			if iValue != jValue {
+				return iValue < jValue
+			}
+		}
+		return false
+	})
 }
 
 func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {
