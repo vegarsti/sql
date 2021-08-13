@@ -34,6 +34,7 @@ const (
 	FROM   = "FROM"
 	ORDER  = "ORDER"
 	BY     = "BY"
+	DESC   = "DESC"
 
 	// Types
 	TEXT    = "TEXT"
