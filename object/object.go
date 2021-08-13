@@ -24,10 +24,15 @@ type Object interface {
 	SortValue() float64
 }
 
+type SortBy struct {
+	Value      Object
+	Descending bool
+}
+
 type Row struct {
 	Aliases      []string
 	Values       []Object
-	SortByValues []Object
+	SortByValues []SortBy
 }
 
 func (r *Row) Inspect() string {

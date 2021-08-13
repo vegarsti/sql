@@ -103,7 +103,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		row := &object.Row{
 			Aliases:      ss.Aliases,
 			Values:       make([]object.Object, len(ss.Expressions)),
-			SortByValues: make([]object.Object, len(ss.OrderBy)),
+			SortByValues: make([]object.SortBy, len(ss.OrderBy)),
 		}
 		for i, e := range ss.Expressions {
 			row.Values[i] = evalExpression(backendRow, e)
@@ -112,10 +112,12 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			}
 		}
 		for i, e := range ss.OrderBy {
-			row.SortByValues[i] = evalExpression(backendRow, e.Expression)
-			if isError(row.SortByValues[i]) {
-				return row.SortByValues[i]
+			v := evalExpression(backendRow, e.Expression)
+			if isError(v) {
+				return v
 			}
+			row.SortByValues[i].Value = v
+			row.SortByValues[i].Descending = e.Descending
 		}
 		rowsToReturn = append(rowsToReturn, row)
 	}
@@ -125,6 +127,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			aliases[i] = ss.Expressions[i].String()
 		}
 	}
+	// Sort
 	if len(ss.OrderBy) != 0 {
 		sortRows(rowsToReturn)
 	}
@@ -139,8 +142,12 @@ func sortRows(rows []*object.Row) {
 	n := len(rows[0].SortByValues) // must be same length for all rows
 	sort.Slice(rows, func(i, j int) bool {
 		for k := 0; k < n; k++ {
-			iValue := rows[i].SortByValues[k].SortValue()
-			jValue := rows[j].SortByValues[k].SortValue()
+			sign := float64(1)
+			if rows[j].SortByValues[k].Descending {
+				sign = -1
+			}
+			iValue := sign * rows[i].SortByValues[k].Value.SortValue()
+			jValue := sign * rows[j].SortByValues[k].Value.SortValue()
 			if iValue != jValue {
 				return iValue < jValue
 			}
