@@ -22,12 +22,17 @@ type Expression interface {
 	expressionNode()
 }
 
+type OrderByExpression struct {
+	Expression Expression
+	Ascending  bool
+}
+
 type SelectStatement struct {
 	Token       token.Token // the SELECT token
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
 	From        string
-	OrderBy     []Expression // can be any expression that would be valid in the query's select list
+	OrderBy     []OrderByExpression // can be any expression that would be valid in the query's select list
 }
 
 func (es *SelectStatement) statementNode()       {}

@@ -112,7 +112,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			}
 		}
 		for i, e := range ss.OrderBy {
-			row.SortByValues[i] = evalExpression(backendRow, e)
+			row.SortByValues[i] = evalExpression(backendRow, e.Expression)
 			if isError(row.SortByValues[i]) {
 				return row.SortByValues[i]
 			}
