@@ -105,9 +105,9 @@ type String struct {
 func (s *String) Inspect() string  { return "'" + s.Value + "'" }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 
-// SortValue of a string is u * 10^-i,
-// where u is the unicode value of the rune,
-// and i is the index of the rune in the string
+// SortValue of a string is the sum of all individual u * 10^-i,
+// where u is the unicode value of each rune,
+// and i is the index of that rune in the string.
 func (s *String) SortValue() float64 {
 	sortValue := float64(0)
 	for i, r := range s.Value {
