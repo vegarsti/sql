@@ -392,8 +392,8 @@ func TestEvalSelectFrom(t *testing.T) {
 		{
 			"select a, b from foo",
 			[][]string{
-				{"abc", "def"},
-				{"bcd", "efg"},
+				{"abc", "efg"},
+				{"bcd", "def"},
 			},
 			"a, b",
 		},
@@ -408,6 +408,14 @@ func TestEvalSelectFrom(t *testing.T) {
 		{
 			"select b from foo",
 			[][]string{
+				{"efg"},
+				{"def"},
+			},
+			"b",
+		},
+		{
+			"select b from foo order by b",
+			[][]string{
 				{"def"},
 				{"efg"},
 			},
@@ -418,19 +426,22 @@ func TestEvalSelectFrom(t *testing.T) {
 		backend := newTestBackend()
 		backend.tables["foo"] = []object.Column{
 			{Name: "a", Type: object.DataType("TEXT")},
+			{Name: "b", Type: object.DataType("TEXT")},
 		}
 		backend.rows["foo"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "abc"},
-					&object.String{Value: "def"},
+					&object.String{Value: "efg"},
+					&object.Integer{Value: 1},
 				},
 				Aliases: []string{"a", "b"},
 			},
 			{
 				Values: []object.Object{
 					&object.String{Value: "bcd"},
-					&object.String{Value: "efg"},
+					&object.String{Value: "def"},
+					&object.Integer{Value: 2},
 				},
 				Aliases: []string{"a", "b"},
 			},
