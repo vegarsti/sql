@@ -460,7 +460,7 @@ func TestSelectWithAs(t *testing.T) {
 }
 
 func TestSelectOrderBy(t *testing.T) {
-	input := "select a from foo order by a, b + 1"
+	input := "select a from foo order by a desc, b + 1 desc"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -506,6 +506,9 @@ func TestSelectOrderBy(t *testing.T) {
 	gotOrderByStrings := make([]string, len(stmt.OrderBy))
 	for i, orderBy := range stmt.OrderBy {
 		gotOrderByStrings[i] = orderBy.Expression.String()
+		if !orderBy.Descending {
+			t.Fatalf("expected stmt.OrderBy.Expression.Descending to be true. got false")
+		}
 	}
 	gotOrderByString := strings.Join(gotOrderByStrings, ", ")
 	if gotOrderByString != expectedOrderByString {
