@@ -16,11 +16,11 @@ OK
 OK
 >> insert into programming_languages values ('Go', 2009)
 OK
->> select name, first_appeared from programming_languages
+>> select name, first_appeared from programming_languages order by first_appeared
 name     first_appeared
+'Lisp'   1958
 'C'      1972
 'Python' 1990
-'Lisp'   1958
 'Go'     2009
 >> select name, 2021 - first_appeared as years_since_introduction from programming_languages
 name     years_since_introduction
