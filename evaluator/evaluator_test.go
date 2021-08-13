@@ -421,6 +421,14 @@ func TestEvalSelectFrom(t *testing.T) {
 			},
 			"b",
 		},
+		{
+			"select b from foo order by b desc",
+			[][]string{
+				{"efg"},
+				{"def"},
+			},
+			"b",
+		},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
