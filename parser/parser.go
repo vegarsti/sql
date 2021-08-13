@@ -173,7 +173,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
-		OrderBy:     make([]ast.Expression, 0),
+		OrderBy:     make([]ast.OrderByExpression, 0),
 	}
 	p.nextToken() // read SELECT token
 
@@ -239,7 +239,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		if sortExpr == nil {
 			return nil
 		}
-		stmt.OrderBy = append(stmt.OrderBy, sortExpr)
+		stmt.OrderBy = append(stmt.OrderBy, ast.OrderByExpression{Expression: sortExpr})
 		p.nextToken()
 		for p.curToken.Type == token.COMMA {
 			p.nextToken() // read comma
@@ -247,7 +247,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			if sortExpr == nil {
 				return nil
 			}
-			stmt.OrderBy = append(stmt.OrderBy, sortExpr)
+			stmt.OrderBy = append(stmt.OrderBy, ast.OrderByExpression{Expression: sortExpr})
 			p.nextToken()
 		}
 	}

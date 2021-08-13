@@ -504,8 +504,8 @@ func TestSelectOrderBy(t *testing.T) {
 	}
 	expectedOrderByString := strings.Join(expectedOrderBy, ", ")
 	gotOrderByStrings := make([]string, len(stmt.OrderBy))
-	for i, expr := range stmt.OrderBy {
-		gotOrderByStrings[i] = expr.String()
+	for i, orderBy := range stmt.OrderBy {
+		gotOrderByStrings[i] = orderBy.Expression.String()
 	}
 	gotOrderByString := strings.Join(gotOrderByStrings, ", ")
 	if gotOrderByString != expectedOrderByString {
