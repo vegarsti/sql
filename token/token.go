@@ -19,13 +19,17 @@ const (
 	BOOL       = "BOOL"
 
 	// Operators
-	PLUS      = "+"
-	MINUS     = "-"
-	ASTERISK  = "*"
-	SLASH     = "/"
-	EQUALS    = "="
-	BANG      = "!"
-	NOTEQUALS = "!="
+	PLUS                = "+"
+	MINUS               = "-"
+	ASTERISK            = "*"
+	SLASH               = "/"
+	EQUALS              = "="
+	BANG                = "!"
+	NOTEQUALS           = "!="
+	LESSTHAN            = "<"
+	LESSTHANOREQUALS    = "<="
+	GREATERTHAN         = "<"
+	GREATERTHANOREQUALS = "<="
 
 	// Keywords
 	SELECT = "SELECT"
