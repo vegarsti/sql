@@ -135,6 +135,10 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	if len(ss.OrderBy) != 0 {
 		sortRows(rowsToReturn)
 	}
+	// Limit
+	if ss.Limit != nil && len(rowsToReturn) > *ss.Limit {
+		rowsToReturn = rowsToReturn[:*ss.Limit]
+	}
 	result := &object.Result{
 		Aliases: aliases,
 		Rows:    rowsToReturn,
