@@ -94,6 +94,9 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.INTEGER {
 				return token.Token{Type: token.INTEGER, Literal: token.INTEGER}
 			}
+			if strings.ToUpper(tok.Literal) == token.INT {
+				return token.Token{Type: token.INTEGER, Literal: token.INTEGER}
+			}
 			if strings.ToUpper(tok.Literal) == token.INSERT {
 				return token.Token{Type: token.INSERT, Literal: token.INSERT}
 			}
