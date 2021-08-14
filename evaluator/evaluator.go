@@ -230,6 +230,12 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		leftInteger := left.(*object.Integer)
 		left = &object.Float{Value: float64(leftInteger.Value)}
 		return evalFloatInfixExpression(operator, left, right)
+	// bool
+	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
+		return evalBooleanInfixExpression(operator, left, right)
+	// string
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(operator, left, right)
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
@@ -248,8 +254,12 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
 		return &object.Float{Value: float64(leftVal) / float64(rightVal)}
+	case "=":
+		return &object.Boolean{Value: leftVal == rightVal}
+	case "!=":
+		return &object.Boolean{Value: leftVal != rightVal}
 	default:
-		panic("unreachable; should have been caught by check in outer function")
+		return newError("unknown integer operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -267,7 +277,35 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 	case "/":
 		return &object.Float{Value: leftVal / rightVal}
 	default:
-		panic("unreachable; should have been caught by check in outer function")
+		return newError("unknown float operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func evalBooleanInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftVal := left.(*object.Boolean).Value
+	rightVal := right.(*object.Boolean).Value
+
+	switch operator {
+	case "=":
+		return &object.Boolean{Value: leftVal == rightVal}
+	case "!=":
+		return &object.Boolean{Value: leftVal != rightVal}
+	default:
+		return newError("unknown boolean operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func evalStringInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	switch operator {
+	case "=":
+		return &object.Boolean{Value: leftVal == rightVal}
+	case "!=":
+		return &object.Boolean{Value: leftVal != rightVal}
+	default:
+		return newError("unknown string operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
