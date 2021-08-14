@@ -145,6 +145,10 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		if len(rowsToReturn) > offset+*ss.Limit {
 			end = offset + *ss.Limit
 		}
+		if end < offset {
+			offset = 0
+			end = 0
+		}
 		rowsToReturn = rowsToReturn[offset:end]
 	}
 	result := &object.Result{

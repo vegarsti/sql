@@ -542,21 +542,23 @@ func TestEvalSelectFrom(t *testing.T) {
 			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
+		log.Println(result.Inspect())
 		if len(result.Rows) != len(tt.expected) {
 			t.Fatalf("expected result to contain %d rows. got=%d", len(tt.expected), len(result.Rows))
 		}
 		if len(result.Rows) == 0 {
-			return
+			continue
 		}
 		row1 := result.Rows[0]
 		if len(row1.Values) != len(tt.expected[0]) {
 			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
 		}
 		for i := range row1.Values {
+			// log.Println(row1.Values[i])
 			testStringObject(t, row1.Values[i], tt.expected[0][i])
 		}
 		if len(result.Rows) == 1 {
-			return
+			continue
 		}
 		row2 := result.Rows[1]
 		if len(row2.Values) != len(tt.expected[1]) {
