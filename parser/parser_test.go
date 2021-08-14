@@ -673,7 +673,7 @@ func TestSelectOrderBy(t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	input := "create table foo (a text, b integer, c double)"
+	input := "create table foo (a text, b integer, c double, d bool, e boolean)"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -701,6 +701,8 @@ func TestCreateTable(t *testing.T) {
 		"a": {Type: token.TEXT, Literal: token.TEXT},
 		"b": {Type: token.INTEGER, Literal: token.INTEGER},
 		"c": {Type: token.DOUBLE, Literal: token.DOUBLE},
+		"d": {Type: token.BOOLEAN, Literal: token.BOOLEAN},
+		"e": {Type: token.BOOLEAN, Literal: token.BOOLEAN},
 	}
 
 	if len(stmt.Columns) != len(expectedColumns) {

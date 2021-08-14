@@ -49,6 +49,7 @@ const (
 	TEXT    = "TEXT"
 	DOUBLE  = "DOUBLE"
 	INTEGER = "INTEGER"
+	BOOLEAN = "BOOLEAN"
 
 	// Delimiters
 	LPAREN    = "("
