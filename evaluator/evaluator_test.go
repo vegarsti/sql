@@ -78,6 +78,9 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"select true != true", false},
 		{"select !true", false},
 		{"select !false", true},
+		{"select false and true", false},
+		{"select false or true", true},
+		{"select false or !true", false},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)

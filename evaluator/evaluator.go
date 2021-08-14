@@ -300,6 +300,10 @@ func evalBooleanInfixExpression(operator string, left object.Object, right objec
 		return &object.Boolean{Value: leftVal == rightVal}
 	case "!=":
 		return &object.Boolean{Value: leftVal != rightVal}
+	case "AND":
+		return &object.Boolean{Value: leftVal && rightVal}
+	case "OR":
+		return &object.Boolean{Value: leftVal || rightVal}
 	default:
 		return newError("unknown boolean operator: %s %s %s", left.Type(), operator, right.Type())
 	}
