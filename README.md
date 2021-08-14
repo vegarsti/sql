@@ -16,20 +16,10 @@ OK
 OK
 >> insert into programming_languages values ('Go', 2009)
 OK
->> select name, first_appeared from programming_languages order by first_appeared
+>> select name, first_appeared from programming_languages where first_appeared < 2000 order by first_appeared
 name     first_appeared
 'Lisp'   1958
 'C'      1972
-'Python' 1990
-'Go'     2009
->> select name, 2021 - first_appeared as years_since_introduction from programming_languages
-name     years_since_introduction
-'C'      49
-'Python' 31
-'Lisp'   63
-'Go'     12
->> select name, first_appeared from programming_languages where name != 'C' order by first_appeared limit 1 offset 1
-name     first_appeared
 'Python' 1990
 >> select 1, 3.14 as pi, '✅' as emoji, 'Vegard' as name
 1 pi       emoji name
