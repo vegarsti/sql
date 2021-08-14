@@ -42,6 +42,8 @@ const (
 	ASC    = "ASC"
 	FALSE  = "FALSE"
 	TRUE   = "TRUE"
+	AND    = "AND"
+	OR     = "OR"
 
 	// Types
 	TEXT    = "TEXT"
