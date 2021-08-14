@@ -554,7 +554,6 @@ func TestEvalSelectFrom(t *testing.T) {
 			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
-		log.Println(result.Inspect())
 		if len(result.Rows) != len(tt.expected) {
 			t.Fatalf("expected result to contain %d rows. got=%d", len(tt.expected), len(result.Rows))
 		}
