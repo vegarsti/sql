@@ -53,8 +53,24 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '=':
 		tok = newToken(token.EQUALS, l.ch)
+	case '>':
+		if l.input[l.position+1] == '=' {
+			tok = token.Token{Type: token.GREATERTHANOREQUALS, Literal: ">="}
+			l.readChar()
+			l.readChar()
+			return tok
+		}
+		tok = newToken(token.GREATERTHAN, l.ch)
+	case '<':
+		if l.input[l.position+1] == '=' {
+			tok = token.Token{Type: token.LESSTHANOREQUALS, Literal: "<="}
+			l.readChar()
+			l.readChar()
+			return tok
+		}
+		tok = newToken(token.LESSTHAN, l.ch)
 	case '!':
-		if string(l.input[l.position:l.position+2]) == "!=" {
+		if l.input[l.position+1] == '=' {
 			tok = token.Token{Type: token.NOTEQUALS, Literal: "!="}
 			l.readChar()
 			l.readChar()
