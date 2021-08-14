@@ -182,6 +182,26 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	return true
 }
 
+func testBooleanLiteral(t *testing.T, bl ast.Expression, value bool) bool {
+	b, ok := bl.(*ast.BooleanLiteral)
+	if !ok {
+		t.Errorf("bl not *ast.BooleanLiteral. got=%T", bl)
+		return false
+	}
+
+	if b.Value != value {
+		t.Errorf("b.Value not %t. got=%t", value, b.Value)
+		return false
+	}
+
+	if b.TokenLiteral() != strings.ToUpper(fmt.Sprintf("%t", value)) {
+		t.Errorf("b.TokenLiteral not %t. got=%s", value, b.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
 func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
@@ -224,6 +244,51 @@ func TestParsingInfixExpressions(t *testing.T) {
 			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
 		}
 		if !testIntegerLiteral(t, exp.Right, tt.rightValue) {
+			return
+		}
+	}
+}
+
+func TestParseBooleanInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  bool
+		operator   string
+		rightValue bool
+	}{
+		{"select true = true", true, "=", true},
+		{"select true != false", true, "!=", false},
+	}
+	for _, tt := range infixTests {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.SelectStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+		}
+
+		if len(stmt.Expressions) != 1 {
+			t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+		}
+
+		exp, ok := stmt.Expressions[0].(*ast.InfixExpression)
+		if !ok {
+			t.Fatalf("stmt is not ast.InfixExpression. got=%T", stmt.Expressions[0])
+		}
+		if !testBooleanLiteral(t, exp.Left, tt.leftValue) {
+			return
+		}
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
+		}
+		if !testBooleanLiteral(t, exp.Right, tt.rightValue) {
 			return
 		}
 	}
