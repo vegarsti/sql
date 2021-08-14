@@ -477,6 +477,26 @@ func TestEvalSelectFrom(t *testing.T) {
 			},
 			"b",
 		},
+		{
+			"select b from foo order by b desc limit 100",
+			[][]string{
+				{"efg"},
+				{"def"},
+			},
+			"b",
+		},
+		{
+			"select b from foo limit 1",
+			[][]string{
+				{"efg"},
+			},
+			"b",
+		},
+		{
+			"select b from foo limit 0",
+			[][]string{},
+			"b",
+		},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
@@ -510,8 +530,11 @@ func TestEvalSelectFrom(t *testing.T) {
 			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
-		if len(result.Rows) != len(backend.rows["foo"]) {
-			t.Fatalf("expected result to contain %d rows. got=%d", len(backend.rows["foo"]), len(result.Rows))
+		if len(result.Rows) != len(tt.expected) {
+			t.Fatalf("expected result to contain %d rows. got=%d", len(tt.expected), len(result.Rows))
+		}
+		if len(result.Rows) == 0 {
+			return
 		}
 		row1 := result.Rows[0]
 		if len(row1.Values) != len(tt.expected[0]) {
@@ -519,6 +542,9 @@ func TestEvalSelectFrom(t *testing.T) {
 		}
 		for i := range row1.Values {
 			testStringObject(t, row1.Values[i], tt.expected[0][i])
+		}
+		if len(result.Rows) == 1 {
+			return
 		}
 		row2 := result.Rows[1]
 		if len(row2.Values) != len(tt.expected[1]) {
