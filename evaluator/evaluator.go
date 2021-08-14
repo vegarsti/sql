@@ -195,6 +195,8 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	switch operator {
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
+	case "!":
+		return evalBangPrefixOperatorExpression(right)
 	default:
 		return newError("unknown operator: %s%s", operator, right.Type())
 	}
@@ -210,6 +212,14 @@ func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 		return &object.Float{Value: -value}
 	}
 	return newError("unknown operator: -%s", right.Type())
+}
+
+func evalBangPrefixOperatorExpression(right object.Object) object.Object {
+	if right.Type() == object.BOOLEAN_OBJ {
+		value := right.(*object.Boolean).Value
+		return &object.Boolean{Value: !value}
+	}
+	return newError("unknown operator: !%s", right.Type())
 }
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
