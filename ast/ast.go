@@ -34,6 +34,7 @@ type SelectStatement struct {
 	From        string
 	OrderBy     []OrderByExpression // can be any expression that would be valid in the query's select list
 	Limit       *int
+	Offset      *int
 }
 
 func (es *SelectStatement) statementNode()       {}

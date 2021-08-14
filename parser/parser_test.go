@@ -673,7 +673,7 @@ func TestSelectOrderBy(t *testing.T) {
 }
 
 func TestSelectLimit(t *testing.T) {
-	input := "select a from foo limit 1"
+	input := "select a from foo limit 1 offset 1"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -717,6 +717,14 @@ func TestSelectLimit(t *testing.T) {
 	}
 	if *stmt.Limit != expectedLimit {
 		t.Fatalf("stmt.Limit not %d. got=%d", expectedLimit, *stmt.Limit)
+	}
+
+	expectedOffset := 1
+	if stmt.Offset == nil {
+		t.Fatalf("stmt.Offset is nil")
+	}
+	if *stmt.Offset != expectedOffset {
+		t.Fatalf("stmt.Offset not %d. got=%d", expectedOffset, *stmt.Offset)
 	}
 }
 
