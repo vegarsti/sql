@@ -194,6 +194,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		From:        "",
 		OrderBy:     make([]ast.OrderByExpression, 0),
 		Limit:       nil,
+		Where:       nil,
 	}
 	p.nextToken() // read SELECT token
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
@@ -245,6 +246,12 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			return nil
 		}
 		stmt.From = p.curToken.Literal
+		p.nextToken()
+	}
+
+	if p.curToken.Type == token.WHERE {
+		p.nextToken()
+		stmt.Where = p.parseExpression(LOWEST)
 		p.nextToken()
 	}
 
