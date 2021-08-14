@@ -45,6 +45,7 @@ const (
 	AND    = "AND"
 	OR     = "OR"
 	LIMIT  = "LIMIT"
+	OFFSET = "OFFSET"
 
 	// Types
 	TEXT    = "TEXT"
