@@ -299,6 +299,8 @@ func TestParseBooleanInfixExpressions(t *testing.T) {
 	}{
 		{"select true = true", true, "=", true},
 		{"select true != false", true, "!=", false},
+		{"select true and false", true, "AND", false},
+		{"select true or false", true, "OR", false},
 	}
 	for _, tt := range infixTests {
 		l := lexer.New(tt.input)
