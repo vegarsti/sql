@@ -54,12 +54,13 @@ func (l *Lexer) NextToken() token.Token {
 	case '=':
 		tok = newToken(token.EQUALS, l.ch)
 	case '!':
-		l.readChar()
-		if l.ch != '=' {
-			tok = newToken(token.ILLEGAL, l.ch)
-			break
+		if string(l.input[l.position:l.position+2]) == "!=" {
+			tok = token.Token{Type: token.NOTEQUALS, Literal: "!="}
+			l.readChar()
+			l.readChar()
+			return tok
 		}
-		tok = token.Token{Type: token.NOTEQUALS, Literal: "!="}
+		tok = newToken(token.BANG, l.ch)
 	case []byte("'")[0]:
 		tok := l.readString()
 		return tok
@@ -216,8 +217,12 @@ func (l *Lexer) readString() token.Token {
 	}
 }
 
+func isWhitespace(ch byte) bool {
+	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+}
+
 func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+	for isWhitespace(l.ch) {
 		l.readChar()
 	}
 }
