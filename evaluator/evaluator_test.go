@@ -486,6 +486,18 @@ func TestEvalSelectFrom(t *testing.T) {
 			"b",
 		},
 		{
+			"select b from foo order by b desc limit 100 offset 1",
+			[][]string{
+				{"def"},
+			},
+			"b",
+		},
+		{
+			"select b from foo order by b desc limit 100 offset 10",
+			[][]string{},
+			"b",
+		},
+		{
 			"select b from foo limit 1",
 			[][]string{
 				{"efg"},
