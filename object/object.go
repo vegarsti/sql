@@ -56,9 +56,13 @@ func (r *Result) Inspect() string {
 	for i, v := range r.Rows {
 		rows[i] = v.Inspect()
 	}
+	header := strings.Join(r.Aliases, "\t")
+	if len(rows) == 0 {
+		return header
+	}
 	allRowsString := strings.Join(rows, "\n")
 	return strings.Join([]string{
-		strings.Join(r.Aliases, "\t"),
+		header,
 		allRowsString,
 	}, "\n")
 }

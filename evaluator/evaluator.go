@@ -95,13 +95,12 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		if err != nil {
 			return newError(err.Error())
 		}
+	} else {
+		rows = []object.Row{{}}
 	}
 
 	// iterate over rows from backend (or a dummy row if not selecting from a table)
 	// and evaluate the expression for each row
-	if len(rows) == 0 {
-		rows = []object.Row{{}}
-	}
 	rowsToReturn := make([]*object.Row, 0)
 	aliases := ss.Aliases
 	for _, backendRow := range rows {
