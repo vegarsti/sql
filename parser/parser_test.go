@@ -44,6 +44,51 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
+func TestBooleanLiteralExpression(t *testing.T) {
+	input := "select true, false"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	expectedLen := 2
+	if len(stmt.Expressions) != expectedLen {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 2, len(stmt.Expressions))
+	}
+
+	literal1, ok := stmt.Expressions[0].(*ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.BooleanLiteral. got=%T", stmt.Expressions[0])
+	}
+	expectedTokenLiteral1 := "TRUE"
+	if literal1.TokenLiteral() != expectedTokenLiteral1 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedTokenLiteral1, literal1.TokenLiteral())
+	}
+
+	literal2, ok := stmt.Expressions[1].(*ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.BooleanLiteral. got=%T", stmt.Expressions[0])
+	}
+	expectedTokenLiteral2 := "FALSE"
+	if literal2.TokenLiteral() != expectedTokenLiteral2 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedTokenLiteral2, literal2.TokenLiteral())
+	}
+
+	checkParserErrors(t, p)
+}
+
 func TestFloatLiteralExpression(t *testing.T) {
 	input := "select 3.14"
 	l := lexer.New(input)
