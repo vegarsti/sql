@@ -304,6 +304,25 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		p.nextToken()
 	}
 
+	if p.curToken.Type == token.OFFSET {
+		if !p.expectPeek(token.INT) {
+			return nil
+		}
+		limit := p.parseIntegerLiteral()
+		n, ok := limit.(*ast.IntegerLiteral)
+		if !ok {
+			p.errors = append(p.errors, fmt.Sprintf("expected integer in offset, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+			return nil
+		}
+		if n.Value < 0 {
+			p.errors = append(p.errors, fmt.Sprintf("limit must be non-negative, got %d", n.Value))
+			return nil
+		}
+		x := int(n.Value)
+		stmt.Offset = &x
+		p.nextToken()
+	}
+
 	if !(p.curToken.Type == token.SEMICOLON || p.curToken.Type == token.EOF) {
 		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.curToken.Type, p.curToken.Literal)
 		p.errors = append(p.errors, msg)
