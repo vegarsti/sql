@@ -194,7 +194,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		OrderBy:     make([]ast.OrderByExpression, 0),
 	}
 	p.nextToken() // read SELECT token
-
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
 	p.nextToken()
 
@@ -325,7 +324,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 	columnLiteral := p.curToken.Literal
 
 	// assert next token is a column type
-	if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER) {
+	if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER || p.peekToken.Type == token.BOOLEAN) {
 		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 		return nil
 	}
@@ -343,7 +342,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		columnLiteral := p.curToken.Literal
 
 		// assert next token is a column type
-		if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER) {
+		if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER || p.peekToken.Type == token.BOOLEAN) {
 			p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 			return nil
 		}
