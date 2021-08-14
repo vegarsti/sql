@@ -28,6 +28,9 @@ name     years_since_introduction
 'Python' 31
 'Lisp'   63
 'Go'     12
+>> select name, first_appeared from programming_languages where name != 'C' order by first_appeared limit 1 offset 1
+name     first_appeared
+'Python' 1990
 >> select 1, 3.14 as pi, '✅' as emoji, 'Vegard' as name
 1 pi       emoji name
 1 3.140000 '✅'   'Vegard'
