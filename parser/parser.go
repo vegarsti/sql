@@ -57,6 +57,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.EQUALS, p.parseInfixExpression)
 	p.registerInfix(token.NOTEQUALS, p.parseInfixExpression)
+	p.registerInfix(token.AND, p.parseInfixExpression)
+	p.registerInfix(token.OR, p.parseInfixExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -489,6 +491,8 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK:  PRODUCT,
 	token.EQUALS:    PRODUCT,
 	token.NOTEQUALS: PRODUCT,
+	token.AND:       SUM,
+	token.OR:        SUM,
 }
 
 func (p *Parser) peekPrecedence() int {
