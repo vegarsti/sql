@@ -505,6 +505,18 @@ func TestEvalSelectFrom(t *testing.T) {
 			"b",
 		},
 		{
+			"select b from foo where b = 'def' limit 1",
+			[][]string{
+				{"def"},
+			},
+			"b",
+		},
+		{
+			"select b from foo where b = 'def' and false limit 1",
+			[][]string{},
+			"b",
+		},
+		{
 			"select b from foo limit 0",
 			[][]string{},
 			"b",

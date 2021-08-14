@@ -115,6 +115,19 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 				return row.Values[i]
 			}
 		}
+		if ss.Where != nil {
+			v := evalExpression(backendRow, ss.Where)
+			if isError(v) {
+				return v
+			}
+			include, ok := v.(*object.Boolean)
+			if !ok {
+				return newError("argument of WHERE must be type boolean, not type integer: %s", v.Inspect())
+			}
+			if !include.Value {
+				continue
+			}
+		}
 		for i, e := range ss.OrderBy {
 			v := evalExpression(backendRow, e.Expression)
 			if isError(v) {
