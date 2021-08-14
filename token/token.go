@@ -35,6 +35,7 @@ const (
 	ORDER  = "ORDER"
 	BY     = "BY"
 	DESC   = "DESC"
+	ASC    = "ASC"
 
 	// Types
 	TEXT    = "TEXT"
