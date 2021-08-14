@@ -244,6 +244,8 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		if p.curToken.Type == token.DESC {
 			orderBy.Descending = true
 			p.nextToken()
+		} else if p.curToken.Type == token.ASC {
+			p.nextToken()
 		}
 		stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		for p.curToken.Type == token.COMMA {
@@ -256,6 +258,8 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			p.nextToken()
 			if p.curToken.Type == token.DESC {
 				orderBy.Descending = true
+				p.nextToken()
+			} else if p.curToken.Type == token.ASC {
 				p.nextToken()
 			}
 			stmt.OrderBy = append(stmt.OrderBy, orderBy)
