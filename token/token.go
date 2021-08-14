@@ -19,10 +19,12 @@ const (
 	BOOL       = "BOOL"
 
 	// Operators
-	PLUS     = "+"
-	MINUS    = "-"
-	ASTERISK = "*"
-	SLASH    = "/"
+	PLUS      = "+"
+	MINUS     = "-"
+	ASTERISK  = "*"
+	SLASH     = "/"
+	EQUALS    = "="
+	NOTEQUALS = "!="
 
 	// Keywords
 	SELECT = "SELECT"
