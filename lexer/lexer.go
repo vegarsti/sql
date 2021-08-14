@@ -145,6 +145,9 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.OFFSET {
 				return token.Token{Type: token.OFFSET, Literal: token.OFFSET}
 			}
+			if strings.ToUpper(tok.Literal) == token.WHERE {
+				return token.Token{Type: token.WHERE, Literal: token.WHERE}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
