@@ -10,7 +10,7 @@ import (
 func TestExpressionValue(t *testing.T) {
 	input := `
 1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer insert into values from identifier_with_underscore;
-order by desc asc false true = !=
+order by desc asc false true = != !2
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -61,6 +61,8 @@ order by desc asc false true = !=
 		{token.BOOL, "TRUE"},
 		{token.EQUALS, "="},
 		{token.NOTEQUALS, "!="},
+		{token.BANG, "!"},
+		{token.INT, "2"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {

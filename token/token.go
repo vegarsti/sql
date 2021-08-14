@@ -24,6 +24,7 @@ const (
 	ASTERISK  = "*"
 	SLASH     = "/"
 	EQUALS    = "="
+	BANG      = "!"
 	NOTEQUALS = "!="
 
 	// Keywords
