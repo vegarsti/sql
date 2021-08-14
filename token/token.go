@@ -28,8 +28,8 @@ const (
 	NOTEQUALS           = "!="
 	LESSTHAN            = "<"
 	LESSTHANOREQUALS    = "<="
-	GREATERTHAN         = "<"
-	GREATERTHANOREQUALS = "<="
+	GREATERTHAN         = ">"
+	GREATERTHANOREQUALS = ">="
 
 	// Keywords
 	SELECT = "SELECT"
