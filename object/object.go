@@ -12,6 +12,7 @@ const (
 	ROW_OBJ     = "ROW"
 	RESULT_OBJ  = "RESULT"
 	INTEGER_OBJ = "INTEGER"
+	BOOLEAN_OBJ = "BOOLEAN"
 	FLOAT_OBJ   = "FLOAT"
 	STRING_OBJ  = "STRING"
 	ERROR_OBJ   = "ERROR"
@@ -89,6 +90,22 @@ type Integer struct {
 func (i *Integer) Inspect() string    { return fmt.Sprintf("%d", i.Value) }
 func (i *Integer) Type() ObjectType   { return INTEGER_OBJ }
 func (i *Integer) SortValue() float64 { return float64(i.Value) }
+
+type Boolean struct {
+	Value bool
+}
+
+func (b *Boolean) Inspect() string  { return fmt.Sprintf("%t", b.Value) }
+func (b *Boolean) Type() ObjectType { return BOOLEAN_OBJ }
+func (b *Boolean) SortValue() float64 {
+	if b.Value {
+		return 1
+	}
+	return 0
+}
+
+var True = Boolean{Value: true}
+var False = Boolean{Value: false}
 
 type Float struct {
 	Value float64
