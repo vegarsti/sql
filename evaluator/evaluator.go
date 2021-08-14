@@ -296,6 +296,14 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return &object.Boolean{Value: leftVal == rightVal}
 	case "!=":
 		return &object.Boolean{Value: leftVal != rightVal}
+	case ">":
+		return &object.Boolean{Value: leftVal > rightVal}
+	case ">=":
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case "<":
+		return &object.Boolean{Value: leftVal < rightVal}
+	case "<=":
+		return &object.Boolean{Value: leftVal <= rightVal}
 	default:
 		return newError("unknown integer operator: %s %s %s", left.Type(), operator, right.Type())
 	}
@@ -314,6 +322,18 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		return &object.Float{Value: leftVal * rightVal}
 	case "/":
 		return &object.Float{Value: leftVal / rightVal}
+	case "=":
+		return &object.Boolean{Value: leftVal == rightVal}
+	case "!=":
+		return &object.Boolean{Value: leftVal != rightVal}
+	case ">":
+		return &object.Boolean{Value: leftVal > rightVal}
+	case ">=":
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case "<":
+		return &object.Boolean{Value: leftVal < rightVal}
+	case "<=":
+		return &object.Boolean{Value: leftVal <= rightVal}
 	default:
 		return newError("unknown float operator: %s %s %s", left.Type(), operator, right.Type())
 	}
