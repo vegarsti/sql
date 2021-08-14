@@ -16,6 +16,7 @@ const (
 	FLOAT      = "FLOAT"
 	STRING     = "STRING"
 	IDENTIFIER = "IDENTIFIER"
+	BOOL       = "BOOL"
 
 	// Operators
 	PLUS     = "+"
