@@ -51,6 +51,15 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.COMMA, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
+	case '=':
+		tok = newToken(token.EQUALS, l.ch)
+	case '!':
+		l.readChar()
+		if l.ch != '=' {
+			tok = newToken(token.ILLEGAL, l.ch)
+			break
+		}
+		tok = token.Token{Type: token.NOTEQUALS, Literal: "!="}
 	case []byte("'")[0]:
 		tok := l.readString()
 		return tok
