@@ -54,13 +54,6 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
-func testEval(backend *testBackend, input string) object.Object {
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	return evaluator.Eval(backend, program)
-}
-
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	result, ok := obj.(*object.Integer)
 	if !ok {
@@ -69,6 +62,54 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func TestEvalBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"select true", true},
+		{"select false", false},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(newTestBackend(), tt.input)
+		result, ok := evaluated.(*object.Result)
+		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
+			t.Fatalf("object is not Result. got=%T", evaluated)
+		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testBooleanObject(t, row.Values[0], tt.expected)
+	}
+}
+
+func testEval(backend *testBackend, input string) object.Object {
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	return evaluator.Eval(backend, program)
+}
+
+func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
+	result, ok := obj.(*object.Boolean)
+	if !ok {
+		t.Errorf("object is not Boolean. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
 		return false
 	}
 	return true

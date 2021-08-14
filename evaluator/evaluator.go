@@ -52,6 +52,11 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *ast.BooleanLiteral:
+		if node.Value {
+			return &object.True
+		}
+		return &object.False
 	case *ast.FloatLiteral:
 		return &object.Float{Value: node.Value}
 	case *ast.StringLiteral:
