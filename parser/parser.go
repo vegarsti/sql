@@ -191,7 +191,9 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
+		From:        "",
 		OrderBy:     make([]ast.OrderByExpression, 0),
+		Limit:       nil,
 	}
 	p.nextToken() // read SELECT token
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
@@ -281,6 +283,25 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			}
 			stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		}
+	}
+
+	if p.curToken.Type == token.LIMIT {
+		if !p.expectPeek(token.INT) {
+			return nil
+		}
+		limit := p.parseIntegerLiteral()
+		n, ok := limit.(*ast.IntegerLiteral)
+		if !ok {
+			p.errors = append(p.errors, fmt.Sprintf("expected integer in limit, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+			return nil
+		}
+		if n.Value < 0 {
+			p.errors = append(p.errors, fmt.Sprintf("limit must be non-negative, got %d", n.Value))
+			return nil
+		}
+		x := int(n.Value)
+		stmt.Limit = &x
+		p.nextToken()
 	}
 
 	if !(p.curToken.Type == token.SEMICOLON || p.curToken.Type == token.EOF) {
