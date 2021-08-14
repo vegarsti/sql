@@ -108,6 +108,12 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.ASC {
 				return token.Token{Type: token.ASC, Literal: token.ASC}
 			}
+			if strings.ToUpper(tok.Literal) == token.TRUE {
+				return token.Token{Type: token.BOOL, Literal: token.TRUE}
+			}
+			if strings.ToUpper(tok.Literal) == token.FALSE {
+				return token.Token{Type: token.BOOL, Literal: token.FALSE}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)

@@ -36,6 +36,8 @@ const (
 	BY     = "BY"
 	DESC   = "DESC"
 	ASC    = "ASC"
+	FALSE  = "FALSE"
+	TRUE   = "TRUE"
 
 	// Types
 	TEXT    = "TEXT"
