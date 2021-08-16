@@ -34,6 +34,7 @@ type Row struct {
 	Aliases      []string
 	Values       []Object
 	SortByValues []SortBy
+	SourceTables []string
 }
 
 func (r *Row) Inspect() string {

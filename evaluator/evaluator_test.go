@@ -450,6 +450,14 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a, b",
 		},
 		{
+			"select a, foo.b from foo",
+			[][]string{
+				{"abc", "efg"},
+				{"bcd", "def"},
+			},
+			"a, b",
+		},
+		{
 			"select a from foo",
 			[][]string{
 				{"abc"},
@@ -540,7 +548,8 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "efg"},
 					&object.Integer{Value: 1},
 				},
-				Aliases: []string{"a", "b", "c"},
+				Aliases:      []string{"a", "b", "c"},
+				SourceTables: []string{"foo", "foo", "foo"},
 			},
 			{
 				Values: []object.Object{
@@ -548,7 +557,8 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "def"},
 					&object.Integer{Value: 2},
 				},
-				Aliases: []string{"a", "b", "c"},
+				Aliases:      []string{"a", "b", "c"},
+				SourceTables: []string{"foo", "foo", "foo"},
 			},
 		}
 		// a second table
@@ -562,14 +572,16 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "abc"},
 					&object.String{Value: "10"},
 				},
-				Aliases: []string{"a", "e"},
+				Aliases:      []string{"a", "e"},
+				SourceTables: []string{"bar", "bar"},
 			},
 			{
 				Values: []object.Object{
 					&object.String{Value: "bcd"},
 					&object.String{Value: "20"},
 				},
-				Aliases: []string{"a", "e"},
+				Aliases:      []string{"a", "e"},
+				SourceTables: []string{"bar", "bar"},
 			},
 		}
 		evaluated := testEval(backend, tt.input)

@@ -3,6 +3,7 @@ package evaluator
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/vegarsti/sql/ast"
 	"github.com/vegarsti/sql/object"
@@ -62,9 +63,27 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
 	case *ast.Identifier:
+		// ensure alias is `column_name` also if identifier is `table_name.column_name`
+		split := strings.Split(node.Value, ".")
+		var columnName string
+		var tableName string
+		if len(split) == 2 {
+			tableName = split[0]
+			columnName = split[1]
+		} else if len(split) == 1 {
+			columnName = split[0]
+		} else {
+			panic(fmt.Sprintf("invalid identifier with more than one '.': %s", node.Value))
+		}
+
 		if row.Values != nil && row.Aliases != nil {
 			for i := range row.Values {
+				// direct match
 				if row.Aliases[i] == node.Value {
+					return row.Values[i]
+				}
+				// identifier contains a table name, ensure the row is from the correct table
+				if tableName == row.SourceTables[i] && columnName == row.Aliases[i] {
 					return row.Values[i]
 				}
 			}
@@ -143,6 +162,10 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		if alias == "" {
 			aliases[i] = ss.Expressions[i].String()
 		}
+		// remove table name from alias (if present)
+		if strings.Contains(aliases[i], ".") {
+			aliases[i] = strings.Split(aliases[i], ".")[1]
+		}
 	}
 	// Sort
 	if len(ss.OrderBy) != 0 {
@@ -207,11 +230,13 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	row := object.Row{
-		Values: make([]object.Object, len(is.Expressions)),
+		Values:       make([]object.Object, len(is.Expressions)),
+		SourceTables: make([]string, len(is.Expressions)),
 	}
 	for i, es := range is.Expressions {
 		obj := Eval(backend, es)
 		row.Values[i] = obj
+		row.SourceTables[i] = is.TableName
 	}
 	if err := backend.InsertInto(is.TableName, row); err != nil {
 		return newError(err.Error())
