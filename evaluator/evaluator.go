@@ -141,7 +141,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			}
 			include, ok := v.(*object.Boolean)
 			if !ok {
-				return newError("argument of WHERE must be type boolean, not type integer: %s", v.Inspect())
+				return newError("argument of WHERE must be type boolean, not %s: %s", v.Type(), v.Inspect())
 			}
 			if !include.Value {
 				continue
