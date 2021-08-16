@@ -529,8 +529,9 @@ func TestEvalSelectFrom(t *testing.T) {
 	for _, tt := range tests {
 		backend := newTestBackend()
 		backend.tables["foo"] = []object.Column{
-			{Name: "a", Type: object.DataType("TEXT")},
-			{Name: "b", Type: object.DataType("TEXT")},
+			{Name: "a", Type: object.TEXT},
+			{Name: "b", Type: object.TEXT},
+			{Name: "c", Type: object.INTEGER},
 		}
 		backend.rows["foo"] = []object.Row{
 			{
@@ -539,7 +540,7 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "efg"},
 					&object.Integer{Value: 1},
 				},
-				Aliases: []string{"a", "b"},
+				Aliases: []string{"a", "b", "c"},
 			},
 			{
 				Values: []object.Object{
@@ -547,7 +548,28 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "def"},
 					&object.Integer{Value: 2},
 				},
-				Aliases: []string{"a", "b"},
+				Aliases: []string{"a", "b", "c"},
+			},
+		}
+		// a second table
+		backend.tables["bar"] = []object.Column{
+			{Name: "a", Type: object.TEXT},
+			{Name: "e", Type: object.TEXT},
+		}
+		backend.rows["bar"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "abc"},
+					&object.String{Value: "10"},
+				},
+				Aliases: []string{"a", "e"},
+			},
+			{
+				Values: []object.Object{
+					&object.String{Value: "bcd"},
+					&object.String{Value: "20"},
+				},
+				Aliases: []string{"a", "e"},
 			},
 		}
 		evaluated := testEval(backend, tt.input)
@@ -569,7 +591,6 @@ func TestEvalSelectFrom(t *testing.T) {
 			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
 		}
 		for i := range row1.Values {
-			// log.Println(row1.Values[i])
 			testStringObject(t, row1.Values[i], tt.expected[0][i])
 		}
 		if len(result.Rows) == 1 {
