@@ -444,7 +444,7 @@ func TestStringLiteralExpression(t *testing.T) {
 }
 
 func TestIdentifierExpression(t *testing.T) {
-	input := "select foo"
+	input := "select foo.bar"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -452,6 +452,8 @@ func TestIdentifierExpression(t *testing.T) {
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
+
+	checkParserErrors(t, p)
 
 	if len(program.Statements) != 1 {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
@@ -470,11 +472,10 @@ func TestIdentifierExpression(t *testing.T) {
 	if !ok {
 		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
 	}
-	expectedLiteral := "foo"
+	expectedLiteral := "foo.bar"
 	if literal.TokenLiteral() != expectedLiteral {
 		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
 	}
-	checkParserErrors(t, p)
 }
 
 func TestSelectMultiple(t *testing.T) {
