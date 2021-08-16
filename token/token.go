@@ -51,6 +51,8 @@ const (
 	LIMIT  = "LIMIT"
 	OFFSET = "OFFSET"
 	WHERE  = "WHERE"
+	JOIN   = "JOIN"
+	ON     = "ON"
 
 	// Types
 	TEXT    = "TEXT"
