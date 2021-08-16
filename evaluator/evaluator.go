@@ -216,9 +216,13 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 	columns := make([]object.Column, len(cst.Columns))
 	i := 0
 	for name, typeToken := range cst.Columns {
+		dataType, err := object.DataTypeFromString(typeToken.Literal)
+		if err != nil {
+			return newError(err.Error())
+		}
 		columns[i] = object.Column{
 			Name: name,
-			Type: object.DataType(typeToken.Literal), // This should always be valid since it has parsed successfully
+			Type: dataType,
 		}
 		i++
 	}

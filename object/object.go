@@ -76,7 +76,24 @@ const (
 	TEXT    = "TEXT"
 	INTEGER = "INTEGER"
 	DOUBLE  = "DOUBLE"
+	BOOLEAN = "BOOLEAN"
 )
+
+func DataTypeFromString(dataType string) (DataType, error) {
+	if dataType == TEXT {
+		return TEXT, nil
+	}
+	if dataType == INTEGER {
+		return INTEGER, nil
+	}
+	if dataType == DOUBLE {
+		return DOUBLE, nil
+	}
+	if dataType == BOOLEAN {
+		return BOOLEAN, nil
+	}
+	return "", fmt.Errorf("no such DataType: %s", dataType)
+}
 
 type Table struct {
 	Name    string
