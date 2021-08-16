@@ -253,6 +253,26 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		p.nextToken()
 	}
 
+	if p.curToken.Type == token.JOIN {
+		p.nextToken()
+		// assert next token is a table name
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		table := p.curToken.Literal
+		if !p.expectPeek(token.ON) {
+			return nil
+		}
+		p.nextToken()
+		joinExpr := p.parseExpression(LOWEST)
+		stmt.Join = &ast.Join{
+			Table: table,
+			On:    joinExpr,
+		}
+		p.nextToken()
+	}
+
 	if p.curToken.Type == token.WHERE {
 		p.nextToken()
 		stmt.Where = p.parseExpression(LOWEST)
