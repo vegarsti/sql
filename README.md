@@ -28,6 +28,21 @@ name     first_appeared
 ERROR: unknown operator: INTEGER + STRING
 >> 1
 ERROR: expected start of statement, got INT token with literal 1
+>> create table a (b int);
+OK
+>> create table b (b int);
+OK
+>> insert into a values (1);
+OK
+>> insert into a values (2);
+OK
+>> insert into b values (1);
+OK
+>> select a.a from a join b on a.b = b.b
+ERROR: no such column: a.a
+>> select a.b from a join b on a.b = b.b
+b
+1
 ```
 
 Based on Thorsten Ball's excellent [Writing an Interpreter in Go](https://interpreterbook.com/).

@@ -533,6 +533,14 @@ func TestEvalSelectFrom(t *testing.T) {
 			[][]string{},
 			"b",
 		},
+		{
+			"select a, b, e from foo join bar on foo.a = bar.a",
+			[][]string{
+				{"abc", "efg", "10"},
+				{"bcd", "def", "20"},
+			},
+			"a, b, e",
+		},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()

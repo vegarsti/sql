@@ -105,7 +105,24 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	return result
 }
 
+// concatenateRows by simply splicing the tuples together.
+// Used when joining tables
+func concatenateRows(row1 object.Row, row2 object.Row) object.Row {
+	aliases := append(row1.Aliases, row2.Aliases...)
+	values := append(row1.Values, row2.Values...)
+	sortByValues := append(row1.SortByValues, row2.SortByValues...)
+	sourceTables := append(row1.SourceTables, row2.SourceTables...)
+	return object.Row{
+		Aliases:      aliases,
+		Values:       values,
+		SortByValues: sortByValues,
+		SourceTables: sourceTables,
+	}
+}
+
 func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
+	/// 1) Get rows
+
 	// fetch rows if selecting from a table
 	var rows []object.Row
 	var err error
@@ -118,8 +135,37 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		rows = []object.Row{{}}
 	}
 
-	// iterate over rows from backend (or a dummy row if not selecting from a table)
-	// and evaluate the expression for each row
+	// fetch join rows and concatenate
+	var joinRows []object.Row
+	if ss.Join != nil {
+		joinRows, err = backend.Rows(ss.Join.Table)
+		if err != nil {
+			return newError(err.Error())
+		}
+		var joinedRows []object.Row
+		for _, backendRow := range rows {
+			for _, joinRow := range joinRows {
+				r := concatenateRows(backendRow, joinRow)
+				v := evalExpression(r, ss.Join.On)
+				if isError(v) {
+					return v
+				}
+				include, ok := v.(*object.Boolean)
+				if !ok {
+					return newError("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
+				}
+				if !include.Value {
+					continue
+				}
+				joinedRows = append(joinedRows, r)
+			}
+		}
+		rows = joinedRows
+	}
+
+	/// 2) Evaluate SELECT for each row
+
+	// iterate over rows and evaluate the expression for each row
 	rowsToReturn := make([]*object.Row, 0)
 	aliases := ss.Aliases
 	for _, backendRow := range rows {
@@ -157,6 +203,8 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 		rowsToReturn = append(rowsToReturn, row)
 	}
+
+	/// 3) Post-processing: Populate aliases, sort, and limit
 	// Populate aliases
 	for i, alias := range ss.Aliases {
 		if alias == "" {
@@ -187,6 +235,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 		rowsToReturn = rowsToReturn[offset:end]
 	}
+
 	result := &object.Result{
 		Aliases: aliases,
 		Rows:    rowsToReturn,
