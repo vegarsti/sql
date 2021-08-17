@@ -12,6 +12,7 @@ type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
 	Rows(string) ([]object.Row, error)
+	ColumnsInTable(string) []string
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {

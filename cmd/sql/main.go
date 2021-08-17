@@ -64,8 +64,9 @@ func main() {
 }
 
 type testBackend struct {
-	tables map[string][]object.Column
-	rows   map[string][]object.Row
+	tables  map[string][]object.Column
+	rows    map[string][]object.Row
+	columns map[string][]string
 }
 
 func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
@@ -74,6 +75,10 @@ func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
 	}
 	tb.tables[name] = columns
 	tb.rows[name] = make([]object.Row, 0)
+	tb.columns[name] = make([]string, len(columns))
+	for i, c := range columns {
+		tb.columns[name][i] = c.Name
+	}
 	return nil
 }
 
@@ -100,9 +105,14 @@ func (tb *testBackend) Rows(name string) ([]object.Row, error) {
 	return rows, nil
 }
 
+func (tb *testBackend) ColumnsInTable(name string) []string {
+	return tb.columns[name]
+}
+
 func newTestBackend() *testBackend {
 	return &testBackend{
-		tables: make(map[string][]object.Column),
-		rows:   make(map[string][]object.Row),
+		tables:  make(map[string][]object.Column),
+		rows:    make(map[string][]object.Row),
+		columns: make(map[string][]string),
 	}
 }
