@@ -70,7 +70,7 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 				}
 			}
 		}
-		return newError("no such column: %s", node.Value)
+		panic(fmt.Sprintf("no such column: %s", node.Value))
 	default:
 		return newError("unknown expression type %T", node)
 	}
@@ -87,7 +87,66 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	return result
 }
 
+// identifiersInExpression walks the node and returns a slice of all identifiers as strings
+func identifiersInExpression(node ast.Expression) ([]string, error) {
+	switch node := node.(type) {
+	case *ast.PrefixExpression:
+		right, err := identifiersInExpression(node.Right)
+		if err != nil {
+			return nil, err
+		}
+		return right, nil
+	case *ast.InfixExpression:
+		left, err := identifiersInExpression(node.Left)
+		if err != nil {
+			return nil, err
+		}
+		right, err := identifiersInExpression(node.Right)
+		if err != nil {
+			return nil, err
+		}
+		var identifiers []string
+		identifiers = append(identifiers, left...)
+		identifiers = append(identifiers, right...)
+		return identifiers, nil
+	case *ast.IntegerLiteral, *ast.BooleanLiteral, *ast.FloatLiteral, *ast.StringLiteral:
+		return nil, nil
+	case *ast.Identifier:
+		return []string{node.Value}, nil
+	}
+	return nil, fmt.Errorf("unknown expression type %T", node)
+}
+
 func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
+	// 1) Traverse tree looking for any column identifiers
+	// 2) Get rows from backend if applicable
+	// 3) For each row, evaluate expression
+
+	identifiers := make(map[string]bool)
+	for _, expr := range ss.Expressions {
+		ids, err := identifiersInExpression(expr)
+		if err != nil {
+			return newError(err.Error())
+		}
+		for _, id := range ids {
+			identifiers[id] = true
+		}
+	}
+
+	columns := make(map[string]bool)
+	if ss.From != "" {
+		cs := backend.ColumnsInTable(ss.From)
+		for _, c := range cs {
+			columns[c] = true
+		}
+	}
+
+	for identifier := range identifiers {
+		if !columns[identifier] {
+			return newError("no such column: %s", identifier)
+		}
+	}
+
 	// fetch rows if selecting from a table
 	var rows []object.Row
 	var err error
