@@ -153,7 +153,7 @@ type Identifier struct {
 
 func (il *Identifier) expressionNode()      {}
 func (il *Identifier) TokenLiteral() string { return il.Token.Literal }
-func (il *Identifier) String() string       { return il.Token.Literal }
+func (il *Identifier) String() string       { return il.Value }
 
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, e.g. -
