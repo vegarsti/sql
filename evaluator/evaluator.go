@@ -122,10 +122,13 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	// 2) Get rows from backend if applicable
 	// 3) For each row, evaluate expression
 
-	columns := make(map[string]bool)
-	if len(ss.From) != 0 {
-		for _, c := range backend.ColumnsInTable(ss.From[0]) {
-			columns[c] = true
+	columns := make(map[string]map[string]bool)
+	for _, from := range ss.From {
+		for _, c := range backend.ColumnsInTable(from) {
+			if _, ok := columns[c]; !ok {
+				columns[c] = make(map[string]bool)
+			}
+			columns[c][from] = true
 		}
 	}
 
@@ -138,16 +141,28 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		for _, id := range ids {
 			// identifier is on the form `table_name.column_name`,
 			// but not selecting from `table_name`
-			if id.Table != "" && id.Table != ss.From[0] {
-				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+			if id.Table != "" {
+				missingFrom := true
+				for _, from := range ss.From {
+					if id.Table == from {
+						missingFrom = false
+					}
+				}
+				if missingFrom {
+					return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+				}
 			}
 			identifiers[id] = true
 		}
 	}
 
 	for identifier := range identifiers {
-		if !columns[identifier.Value] {
+		tables, ok := columns[identifier.Value]
+		if !ok {
 			return newError("no such column: %s", identifier.Value)
+		}
+		if identifier.Table == "" && len(tables) > 1 {
+			return newError(`column reference "%s" is ambiguous`, identifier.Value)
 		}
 	}
 
