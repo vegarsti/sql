@@ -216,7 +216,7 @@ func (l *Lexer) readIdentifier() token.Token {
 	}
 	if nDots == 1 {
 		return token.Token{
-			Type:    token.IDENTIFIER_WITH_TABLENAME,
+			Type:    token.QUALIFIEDIDENTIFIER,
 			Literal: literal,
 		}
 	}

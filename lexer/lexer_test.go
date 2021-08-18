@@ -72,7 +72,7 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.LESSTHANOREQUALS, "<="},
 		{token.GREATERTHAN, ">"},
 		{token.GREATERTHANOREQUALS, ">="},
-		{token.IDENTIFIER_WITH_TABLENAME, "table_name.column_name"},
+		{token.QUALIFIEDIDENTIFIER, "table_name.column_name"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {
