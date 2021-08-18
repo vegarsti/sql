@@ -468,6 +468,14 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a",
 		},
 		{
+			"select foo.a from foo",
+			[][]string{
+				{"abc"},
+				{"bcd"},
+			},
+			"foo.a",
+		},
+		{
 			"select b from foo",
 			[][]string{
 				{"efg"},
