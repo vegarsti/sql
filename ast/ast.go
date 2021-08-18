@@ -148,6 +148,7 @@ func (sl *StringLiteral) String() string       { return "'" + sl.Token.Literal +
 type Identifier struct {
 	Token token.Token
 	Value string
+	Table string
 }
 
 func (il *Identifier) expressionNode()      {}
