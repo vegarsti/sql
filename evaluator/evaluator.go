@@ -136,6 +136,11 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 			return newError(err.Error())
 		}
 		for _, id := range ids {
+			// identifier is on the form `table_name.column_name`,
+			// but not selecting from `table_name`
+			if id.Table != "" && id.Table != ss.From {
+				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+			}
 			identifiers[id] = true
 		}
 	}
