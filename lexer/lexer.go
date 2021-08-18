@@ -203,12 +203,26 @@ func (l *Lexer) readNumber() token.Token {
 
 func (l *Lexer) readIdentifier() token.Token {
 	position := l.position
-	for isLetter(l.ch) || l.ch == '_' {
+	for isLetter(l.ch) || l.ch == '_' || l.ch == '.' {
 		l.readChar()
+	}
+	literal := l.input[position:l.position]
+	nDots := strings.Count(literal, ".")
+	if nDots > 1 {
+		return token.Token{
+			Type:    token.ILLEGAL,
+			Literal: literal,
+		}
+	}
+	if nDots == 1 {
+		return token.Token{
+			Type:    token.IDENTIFIER_WITH_TABLENAME,
+			Literal: literal,
+		}
 	}
 	return token.Token{
 		Type:    token.IDENTIFIER,
-		Literal: l.input[position:l.position],
+		Literal: literal,
 	}
 }
 

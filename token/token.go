@@ -12,11 +12,12 @@ const (
 	EOF     = "EOF"
 
 	// Literals
-	INT        = "INT"
-	FLOAT      = "FLOAT"
-	STRING     = "STRING"
-	IDENTIFIER = "IDENTIFIER"
-	BOOL       = "BOOL"
+	INT                       = "INT"
+	FLOAT                     = "FLOAT"
+	STRING                    = "STRING"
+	IDENTIFIER                = "IDENTIFIER"
+	IDENTIFIER_WITH_TABLENAME = "IDENTIFIER_WITH_TABLENAME"
+	BOOL                      = "BOOL"
 
 	// Operators
 	PLUS                = "+"
