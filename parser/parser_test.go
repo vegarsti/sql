@@ -477,7 +477,7 @@ func TestIdentifierExpression(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
-func TestIdentifierWithTableName(t *testing.T) {
+func TestQualifiedIdentifier(t *testing.T) {
 	input := "select foo.bar"
 	l := lexer.New(input)
 	p := parser.New(l)
