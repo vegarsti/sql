@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/vegarsti/sql/ast"
 	"github.com/vegarsti/sql/lexer"
@@ -46,6 +47,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
+	p.registerPrefix(token.IDENTIFIER_WITH_TABLENAME, p.parseIdentifierWithTableName)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
@@ -172,6 +174,16 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	lit := &ast.Identifier{
 		Token: p.curToken,
 		Value: p.curToken.Literal,
+	}
+	return lit
+}
+
+func (p *Parser) parseIdentifierWithTableName() ast.Expression {
+	split := strings.Split(p.curToken.Literal, ".")
+	lit := &ast.Identifier{
+		Token: p.curToken,
+		Value: split[1],
+		Table: split[0],
 	}
 	return lit
 }

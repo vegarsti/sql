@@ -477,6 +477,48 @@ func TestIdentifierExpression(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
+func TestIdentifierWithTableName(t *testing.T) {
+	input := "select foo.bar"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral := "foo.bar"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	}
+	expectedTable := "foo"
+	if literal.Table != expectedTable {
+		t.Errorf("literal.Table not %s. got=%s", expectedTable, literal.Table)
+	}
+	expectedValue := "bar"
+	if literal.Value != expectedValue {
+		t.Errorf("literal.Value not %s. got=%s", expectedValue, literal.Value)
+	}
+	checkParserErrors(t, p)
+}
+
 func TestSelectMultiple(t *testing.T) {
 	input := "select 5, 'abc',0"
 	l := lexer.New(input)
