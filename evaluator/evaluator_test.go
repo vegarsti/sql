@@ -473,7 +473,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				{"abc"},
 				{"bcd"},
 			},
-			"foo.a",
+			"a",
 		},
 		{
 			"select b from foo",
