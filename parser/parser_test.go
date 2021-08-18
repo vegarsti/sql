@@ -519,6 +519,80 @@ func TestQualifiedIdentifier(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
+func TestSelectCartesianJoin(t *testing.T) {
+	input := "select a.a, b.b from a, b"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 2 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal1, ok := stmt.Expressions[0].(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral1 := "a.a"
+	if literal1.TokenLiteral() != expectedLiteral1 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
+	}
+	expectedTable1 := "a"
+	if literal1.Table != expectedTable1 {
+		t.Errorf("literal.Table not %s. got=%s", expectedTable1, literal1.Table)
+	}
+	expectedValue1 := "a"
+	if literal1.Value != expectedValue1 {
+		t.Errorf("literal.Value not %s. got=%s", expectedValue1, literal1.Value)
+	}
+
+	literal2, ok := stmt.Expressions[1].(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[1])
+	}
+	expectedLiteral2 := "b.b"
+	if literal2.TokenLiteral() != expectedLiteral2 {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral2, literal2.TokenLiteral())
+	}
+	expectedTable2 := "b"
+	if literal2.Table != expectedTable2 {
+		t.Errorf("literal.Table not %s. got=%s", expectedTable2, literal2.Table)
+	}
+	expectedValue2 := "b"
+	if literal2.Value != expectedValue2 {
+		t.Errorf("literal.Value not %s. got=%s", expectedValue2, literal2.Value)
+	}
+
+	expectedFromLen := 2
+	if len(stmt.From) != expectedFromLen {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
+	}
+
+	expectedFrom1 := "a"
+	if stmt.From[0] != expectedFrom1 {
+		t.Fatalf("stmt.From[0] not %s. got=%s", expectedFrom1, stmt.From[0])
+	}
+	expectedFrom2 := "b"
+	if stmt.From[1] != expectedFrom2 {
+		t.Fatalf("stmt.From[1] not %s. got=%s", expectedFrom2, stmt.From[1])
+	}
+
+	checkParserErrors(t, p)
+}
+
 func TestSelectMultiple(t *testing.T) {
 	input := "select 5, 'abc',0"
 	l := lexer.New(input)

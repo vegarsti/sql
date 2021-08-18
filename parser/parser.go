@@ -265,6 +265,17 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		p.nextToken()
 	}
 
+	for p.curToken.Type == token.COMMA {
+		p.nextToken() // read comma
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.From = append(stmt.From, p.curToken.Literal)
+		p.nextToken()
+	}
+
 	if p.curToken.Type == token.WHERE {
 		p.nextToken()
 		stmt.Where = p.parseExpression(LOWEST)
