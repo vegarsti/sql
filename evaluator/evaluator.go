@@ -88,7 +88,7 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 }
 
 // identifiersInExpression walks the node and returns a slice of all identifiers as strings
-func identifiersInExpression(node ast.Expression) ([]string, error) {
+func identifiersInExpression(node ast.Expression) ([]ast.Identifier, error) {
 	switch node := node.(type) {
 	case *ast.PrefixExpression:
 		right, err := identifiersInExpression(node.Right)
@@ -105,14 +105,14 @@ func identifiersInExpression(node ast.Expression) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		var identifiers []string
+		var identifiers []ast.Identifier
 		identifiers = append(identifiers, left...)
 		identifiers = append(identifiers, right...)
 		return identifiers, nil
 	case *ast.IntegerLiteral, *ast.BooleanLiteral, *ast.FloatLiteral, *ast.StringLiteral:
 		return nil, nil
 	case *ast.Identifier:
-		return []string{node.Value}, nil
+		return []ast.Identifier{*node}, nil
 	}
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
@@ -122,7 +122,14 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	// 2) Get rows from backend if applicable
 	// 3) For each row, evaluate expression
 
-	identifiers := make(map[string]bool)
+	columns := make(map[string]bool)
+	if ss.From != "" {
+		for _, c := range backend.ColumnsInTable(ss.From) {
+			columns[c] = true
+		}
+	}
+
+	identifiers := make(map[ast.Identifier]bool)
 	for _, expr := range ss.Expressions {
 		ids, err := identifiersInExpression(expr)
 		if err != nil {
@@ -133,17 +140,9 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 	}
 
-	columns := make(map[string]bool)
-	if ss.From != "" {
-		cs := backend.ColumnsInTable(ss.From)
-		for _, c := range cs {
-			columns[c] = true
-		}
-	}
-
 	for identifier := range identifiers {
-		if !columns[identifier] {
-			return newError("no such column: %s", identifier)
+		if !columns[identifier.Value] {
+			return newError("no such column: %s", identifier.Value)
 		}
 	}
 
