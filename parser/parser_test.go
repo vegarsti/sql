@@ -689,7 +689,11 @@ func TestSelectOrderBy(t *testing.T) {
 	}
 
 	expectedFrom := "foo"
-	if stmt.From != expectedFrom {
+	expectedFromLen := 1
+	if len(stmt.From) != expectedFromLen {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
+	}
+	if stmt.From[0] != expectedFrom {
 		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
 	}
 
@@ -749,7 +753,11 @@ func TestSelectLimit(t *testing.T) {
 	}
 
 	expectedFrom := "foo"
-	if stmt.From != expectedFrom {
+	expectedFromLen := 1
+	if len(stmt.From) != expectedFromLen {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
+	}
+	if stmt.From[0] != expectedFrom {
 		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
 	}
 
@@ -805,7 +813,11 @@ func TestSelectWhere(t *testing.T) {
 	}
 
 	expectedFrom := "foo"
-	if stmt.From != expectedFrom {
+	expectedFromLen := 1
+	if len(stmt.From) != expectedFromLen {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
+	}
+	if stmt.From[0] != expectedFrom {
 		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
 	}
 
@@ -951,7 +963,11 @@ func TestSelectFrom(t *testing.T) {
 	}
 
 	expectedFrom := "foo"
-	if stmt.From != expectedFrom {
+	expectedFromLen := 1
+	if len(stmt.From) != expectedFromLen {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
+	}
+	if stmt.From[0] != expectedFrom {
 		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
 	}
 }

@@ -123,8 +123,8 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	// 3) For each row, evaluate expression
 
 	columns := make(map[string]bool)
-	if ss.From != "" {
-		for _, c := range backend.ColumnsInTable(ss.From) {
+	if len(ss.From) != 0 {
+		for _, c := range backend.ColumnsInTable(ss.From[0]) {
 			columns[c] = true
 		}
 	}
@@ -138,7 +138,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		for _, id := range ids {
 			// identifier is on the form `table_name.column_name`,
 			// but not selecting from `table_name`
-			if id.Table != "" && id.Table != ss.From {
+			if id.Table != "" && id.Table != ss.From[0] {
 				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
 			}
 			identifiers[id] = true
@@ -154,8 +154,8 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	// fetch rows if selecting from a table
 	var rows []object.Row
 	var err error
-	if ss.From != "" {
-		rows, err = backend.Rows(ss.From)
+	if len(ss.From) != 0 {
+		rows, err = backend.Rows(ss.From[0])
 		if err != nil {
 			return newError(err.Error())
 		}
