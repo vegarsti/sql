@@ -209,16 +209,53 @@ func testStringObject(t *testing.T, obj object.Object, expected string) bool {
 	return true
 }
 
-func TestEvalIdentifierExpression(t *testing.T) {
+func TestSelectErrors(t *testing.T) {
 	tests := []struct {
 		input                string
 		expectedErrorMessage string
 	}{
 		{"select foo", `column "foo" does not exist`},
 		{"select bar.foo", `missing FROM-clause entry for table "bar"`},
+		{"select a from foo, bar", `column reference "a" is ambiguous`},
+		{"select a from foo order by d", `column "d" does not exist`},
+		{"select a from foo where 1", `argument of WHERE must be type boolean, not type integer: 1`},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		backend := newTestBackend()
+
+		// table `foo`
+		backend.tables["foo"] = []object.Column{
+			{Name: "a", Type: object.TEXT},
+			{Name: "b", Type: object.TEXT},
+			{Name: "c", Type: object.INTEGER},
+		}
+		backend.rows["foo"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "abc"},
+					&object.String{Value: "efg"},
+					&object.Integer{Value: 1},
+				},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
+			},
+			{
+				Values: []object.Object{
+					&object.String{Value: "bcd"},
+					&object.String{Value: "def"},
+					&object.Integer{Value: 2},
+				},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
+			},
+		}
+		backend.columns["foo"] = []string{"a", "b", "c"}
+
+		// table `bar`
+		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.TEXT}}
+		backend.columns["bar"] = []string{"a"}
+
+		evaluated := testEval(backend, tt.input)
 		testError(t, evaluated, tt.expectedErrorMessage)
 	}
 }
