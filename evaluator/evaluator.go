@@ -210,19 +210,29 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 
 	// fetch rows
 	rows := []object.Row{{}}
-	for _, from := range ss.From {
-		var newRows []object.Row
-		r, err := backend.Rows(from)
+	if len(ss.From) > 0 {
+		r, err := backend.Rows(ss.From[0])
 		if err != nil {
 			return newError(err.Error())
 		}
-		for _, row1 := range rows {
-			for _, row2 := range r {
-				newRow := concatenateRows(row1, row2)
-				newRows = append(newRows, newRow)
+		rows = r
+	}
+	// do cartesian join if more than one from-table
+	if len(ss.From) > 1 {
+		for _, from := range ss.From[1:] {
+			var newRows []object.Row
+			r, err := backend.Rows(from)
+			if err != nil {
+				return newError(err.Error())
 			}
+			for _, row1 := range rows {
+				for _, row2 := range r {
+					newRow := concatenateRows(row1, row2)
+					newRows = append(newRows, newRow)
+				}
+			}
+			rows = newRows
 		}
-		rows = newRows
 	}
 
 	// iterate over rows and evaluate expressions for each row
