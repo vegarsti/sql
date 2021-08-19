@@ -161,7 +161,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 
 	for _, identifier := range allIdentifiers {
 		if !columns[identifier.Value] {
-			return newError("no such column: %s", identifier.Value)
+			return newError(`column "%s" does not exist`, identifier.Value)
 		}
 		identifier.Table = ss.From
 	}

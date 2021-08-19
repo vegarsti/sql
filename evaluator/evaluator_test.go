@@ -214,7 +214,7 @@ func TestEvalIdentifierExpression(t *testing.T) {
 		input                string
 		expectedErrorMessage string
 	}{
-		{"select foo", "no such column: foo"},
+		{"select foo", `column "foo" does not exist`},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
