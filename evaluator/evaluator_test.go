@@ -547,8 +547,9 @@ func TestEvalSelectFrom(t *testing.T) {
 	for _, tt := range tests {
 		backend := newTestBackend()
 		backend.tables["foo"] = []object.Column{
-			{Name: "a", Type: object.DataType("TEXT")},
-			{Name: "b", Type: object.DataType("TEXT")},
+			{Name: "a", Type: object.TEXT},
+			{Name: "b", Type: object.TEXT},
+			{Name: "c", Type: object.INTEGER},
 		}
 		backend.rows["foo"] = []object.Row{
 			{
