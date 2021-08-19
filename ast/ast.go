@@ -31,7 +31,7 @@ type SelectStatement struct {
 	Token       token.Token // the SELECT token
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
-	From        string
+	From        []string
 	OrderBy     []*OrderByExpression // can be any expression that would be valid in the query's select list
 	Limit       *int
 	Offset      *int

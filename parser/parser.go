@@ -207,7 +207,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
-		From:        "",
+		From:        make([]string, 0),
 		OrderBy:     make([]*ast.OrderByExpression, 0),
 		Limit:       nil,
 		Where:       nil,
@@ -258,10 +258,21 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		p.nextToken()
 		// assert next token is an identifier
 		if p.curToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 			return nil
 		}
-		stmt.From = p.curToken.Literal
+		stmt.From = append(stmt.From, p.curToken.Literal)
+		p.nextToken()
+	}
+
+	for p.curToken.Type == token.COMMA {
+		p.nextToken() // read comma
+		// assert next token is an identifier
+		if p.curToken.Type != token.IDENTIFIER {
+			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+			return nil
+		}
+		stmt.From = append(stmt.From, p.curToken.Literal)
 		p.nextToken()
 	}
 

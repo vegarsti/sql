@@ -70,7 +70,10 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 				}
 			}
 		}
-		panic(fmt.Sprintf("no such column: %s", node.Value))
+		if node.Table != "" {
+			return newError("column: %s.%s does not exist", node.Table, node.Value)
+		}
+		return newError("no such column: %s", node.Value)
 	default:
 		return newError("unknown expression type %T", node)
 	}
@@ -85,6 +88,19 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 		}
 	}
 	return result
+}
+
+// concatenateRows by simply splicing the tuples together.
+// Used when joining tables
+func concatenateRows(row1 object.Row, row2 object.Row) object.Row {
+	aliases := append(row1.Aliases, row2.Aliases...)
+	values := append(row1.Values, row2.Values...)
+	tableNames := append(row1.TableName, row2.TableName...)
+	return object.Row{
+		Aliases:   aliases,
+		Values:    values,
+		TableName: tableNames,
+	}
 }
 
 // identifiersInExpression walks the node and returns a slice of all identifiers as strings
@@ -122,13 +138,17 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	// 2) Get rows from backend if applicable
 	// 3) For each row, evaluate expression
 
-	columns := make(map[string]bool)
-	if ss.From != "" {
-		for _, c := range backend.ColumnsInTable(ss.From) {
-			columns[c] = true
+	columns := make(map[string]map[string]bool)
+	for _, from := range ss.From {
+		for _, c := range backend.ColumnsInTable(from) {
+			if _, ok := columns[c]; !ok {
+				columns[c] = make(map[string]bool)
+			}
+			columns[c][from] = true
 		}
 	}
 
+	// gather pointers to all identifiers used in statement
 	var allIdentifiers []*ast.Identifier
 	for _, expr := range ss.Expressions {
 		ids, err := identifiersInExpression(expr)
@@ -151,31 +171,68 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
+
+	// check for missing FROM clause
 	for _, id := range allIdentifiers {
 		// identifier is on the form `table_name.column_name`,
 		// but not selecting from `table_name`
-		if id.Table != "" && id.Table != ss.From {
-			return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+		if id.Table != "" {
+			missingFrom := true
+			for _, from := range ss.From {
+				if id.Table == from {
+					missingFrom = false
+				}
+			}
+			if missingFrom {
+				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+			}
 		}
 	}
 
+	// populate column identifiers with which table the column belongs to, and fail if ambiguous or non-existent
 	for _, identifier := range allIdentifiers {
-		if !columns[identifier.Value] {
+		tables, ok := columns[identifier.Value]
+		if !ok {
 			return newError(`column "%s" does not exist`, identifier.Value)
 		}
-		identifier.Table = ss.From
+		if identifier.Table != "" {
+			continue
+		}
+		if len(tables) > 1 {
+			return newError(`column reference "%s" is ambiguous`, identifier.Value)
+		}
+		var table string
+		for t := range tables {
+			table = t
+		}
+		identifier.Table = table
 	}
 
-	// fetch rows if selecting from a table
-	var rows []object.Row
-	var err error
-	if ss.From != "" {
-		rows, err = backend.Rows(ss.From)
+	// fetch rows
+	rows := []object.Row{{}}
+	if len(ss.From) > 0 {
+		r, err := backend.Rows(ss.From[0])
 		if err != nil {
 			return newError(err.Error())
 		}
-	} else {
-		rows = []object.Row{{}}
+		rows = r
+	}
+	// do cartesian join if more than one from-table
+	if len(ss.From) > 1 {
+		for _, from := range ss.From[1:] {
+			var newRows []object.Row
+			r, err := backend.Rows(from)
+			if err != nil {
+				return newError(err.Error())
+			}
+			for _, row1 := range rows {
+				for _, row2 := range r {
+					newRow := concatenateRows(row1, row2)
+					newRows = append(newRows, newRow)
+				}
+			}
+			rows = newRows
+		}
 	}
 
 	// iterate over rows and evaluate expressions for each row

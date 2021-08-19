@@ -209,15 +209,53 @@ func testStringObject(t *testing.T, obj object.Object, expected string) bool {
 	return true
 }
 
-func TestEvalIdentifierExpression(t *testing.T) {
+func TestSelectErrors(t *testing.T) {
 	tests := []struct {
 		input                string
 		expectedErrorMessage string
 	}{
 		{"select foo", `column "foo" does not exist`},
+		{"select bar.foo", `missing FROM-clause entry for table "bar"`},
+		{"select a from foo, bar", `column reference "a" is ambiguous`},
+		{"select a from foo order by d", `column "d" does not exist`},
+		{"select a from foo where 1", `argument of WHERE must be type boolean, not type integer: 1`},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		backend := newTestBackend()
+
+		// table `foo`
+		backend.tables["foo"] = []object.Column{
+			{Name: "a", Type: object.TEXT},
+			{Name: "b", Type: object.TEXT},
+			{Name: "c", Type: object.INTEGER},
+		}
+		backend.rows["foo"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "abc"},
+					&object.String{Value: "efg"},
+					&object.Integer{Value: 1},
+				},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
+			},
+			{
+				Values: []object.Object{
+					&object.String{Value: "bcd"},
+					&object.String{Value: "def"},
+					&object.Integer{Value: 2},
+				},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
+			},
+		}
+		backend.columns["foo"] = []string{"a", "b", "c"}
+
+		// table `bar`
+		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.TEXT}}
+		backend.columns["bar"] = []string{"a"}
+
+		evaluated := testEval(backend, tt.input)
 		testError(t, evaluated, tt.expectedErrorMessage)
 	}
 }
@@ -448,104 +486,206 @@ func TestEvalInsert(t *testing.T) {
 func TestEvalSelectFrom(t *testing.T) {
 	tests := []struct {
 		input           string
-		expected        [][]string
+		expected        []object.Row
 		expectedAliases string
 	}{
 		{
 			"select a, b from foo",
-			[][]string{
-				{"abc", "efg"},
-				{"bcd", "def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "efg"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"a, b",
 		},
 		{
 			"select a from foo",
-			[][]string{
-				{"abc"},
-				{"bcd"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+					},
+				},
 			},
 			"a",
 		},
 		{
 			"select foo.a from foo",
-			[][]string{
-				{"abc"},
-				{"bcd"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+					},
+				},
 			},
 			"a",
 		},
 		{
 			"select b from foo",
-			[][]string{
-				{"efg"},
-				{"def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "efg"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"b",
 		},
 		{
+			"select foo.a, bar.a from foo, bar",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+					},
+				},
+			},
+			"a, a",
+		},
+		{
 			"select b from foo order by b",
-			[][]string{
-				{"def"},
-				{"efg"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "efg"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo order by b desc",
-			[][]string{
-				{"efg"},
-				{"def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "efg"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo order by b desc limit 100",
-			[][]string{
-				{"efg"},
-				{"def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "efg"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo order by b desc limit 100 offset 1",
-			[][]string{
-				{"def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo order by b desc limit 100 offset 10",
-			[][]string{},
+			[]object.Row{},
 			"b",
 		},
 		{
 			"select b from foo limit 1",
-			[][]string{
-				{"efg"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "efg"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo where b = 'def' limit 1",
-			[][]string{
-				{"def"},
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "def"},
+					},
+				},
 			},
 			"b",
 		},
 		{
 			"select b from foo where b = 'def' and false limit 1",
-			[][]string{},
+			[]object.Row{},
 			"b",
 		},
 		{
 			"select b from foo limit 0",
-			[][]string{},
+			[]object.Row{},
 			"b",
 		},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
+
+		// table `foo`
 		backend.tables["foo"] = []object.Column{
 			{Name: "a", Type: object.TEXT},
 			{Name: "b", Type: object.TEXT},
@@ -572,6 +712,29 @@ func TestEvalSelectFrom(t *testing.T) {
 			},
 		}
 		backend.columns["foo"] = []string{"a", "b", "c"}
+
+		// table `bar`
+		backend.tables["bar"] = []object.Column{
+			{Name: "a", Type: object.TEXT},
+		}
+		backend.rows["bar"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "m"},
+				},
+				Aliases:   []string{"a"},
+				TableName: []string{"bar"},
+			},
+			{
+				Values: []object.Object{
+					&object.String{Value: "n"},
+				},
+				Aliases:   []string{"a"},
+				TableName: []string{"bar"},
+			},
+		}
+		backend.columns["bar"] = []string{"a"}
+
 		evaluated := testEval(backend, tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
@@ -586,24 +749,11 @@ func TestEvalSelectFrom(t *testing.T) {
 		if len(result.Rows) == 0 {
 			continue
 		}
-		row1 := result.Rows[0]
-		if len(row1.Values) != len(tt.expected[0]) {
-			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
+		for i, gotRow := range result.Rows {
+			if gotRow.Inspect() != tt.expected[i].Inspect() {
+				t.Fatalf("expected row to be %s. got=%s", tt.expected[i].Inspect(), gotRow.Inspect())
+			}
 		}
-		for i := range row1.Values {
-			testStringObject(t, row1.Values[i], tt.expected[0][i])
-		}
-		if len(result.Rows) == 1 {
-			continue
-		}
-		row2 := result.Rows[1]
-		if len(row2.Values) != len(tt.expected[1]) {
-			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[1]), len(row1.Values))
-		}
-		for i := range row2.Values {
-			testStringObject(t, row2.Values[i], tt.expected[1][i])
-		}
-
 		gotAliases := strings.Join(result.Aliases, ", ")
 		if gotAliases != tt.expectedAliases {
 			t.Fatalf("expected aliases %s. got=%s", tt.expectedAliases, gotAliases)
