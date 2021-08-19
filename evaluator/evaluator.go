@@ -65,7 +65,7 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 	case *ast.Identifier:
 		if row.Values != nil && row.Aliases != nil {
 			for i := range row.Values {
-				if row.Aliases[i] == node.Value {
+				if row.Aliases[i] == node.Value && row.TableName[i] == node.Table {
 					return row.Values[i]
 				}
 			}
@@ -88,7 +88,7 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 }
 
 // identifiersInExpression walks the node and returns a slice of all identifiers as strings
-func identifiersInExpression(node ast.Expression) ([]ast.Identifier, error) {
+func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 	switch node := node.(type) {
 	case *ast.PrefixExpression:
 		right, err := identifiersInExpression(node.Right)
@@ -105,14 +105,14 @@ func identifiersInExpression(node ast.Expression) ([]ast.Identifier, error) {
 		if err != nil {
 			return nil, err
 		}
-		var identifiers []ast.Identifier
+		var identifiers []*ast.Identifier
 		identifiers = append(identifiers, left...)
 		identifiers = append(identifiers, right...)
 		return identifiers, nil
 	case *ast.IntegerLiteral, *ast.BooleanLiteral, *ast.FloatLiteral, *ast.StringLiteral:
 		return nil, nil
 	case *ast.Identifier:
-		return []ast.Identifier{*node}, nil
+		return []*ast.Identifier{node}, nil
 	}
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
@@ -129,26 +129,41 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		}
 	}
 
-	identifiers := make(map[ast.Identifier]bool)
+	var allIdentifiers []*ast.Identifier
 	for _, expr := range ss.Expressions {
 		ids, err := identifiersInExpression(expr)
 		if err != nil {
 			return newError(err.Error())
 		}
-		for _, id := range ids {
-			// identifier is on the form `table_name.column_name`,
-			// but not selecting from `table_name`
-			if id.Table != "" && id.Table != ss.From {
-				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
-			}
-			identifiers[id] = true
+		allIdentifiers = append(allIdentifiers, ids...)
+	}
+	if ss.Where != nil {
+		ids, err := identifiersInExpression(ss.Where)
+		if err != nil {
+			return newError(err.Error())
+		}
+		allIdentifiers = append(allIdentifiers, ids...)
+	}
+	for _, orderBy := range ss.OrderBy {
+		ids, err := identifiersInExpression(orderBy.Expression)
+		if err != nil {
+			return newError(err.Error())
+		}
+		allIdentifiers = append(allIdentifiers, ids...)
+	}
+	for _, id := range allIdentifiers {
+		// identifier is on the form `table_name.column_name`,
+		// but not selecting from `table_name`
+		if id.Table != "" && id.Table != ss.From {
+			return newError(`missing FROM-clause entry for table "%s"`, id.Table)
 		}
 	}
 
-	for identifier := range identifiers {
+	for _, identifier := range allIdentifiers {
 		if !columns[identifier.Value] {
 			return newError("no such column: %s", identifier.Value)
 		}
+		identifier.Table = ss.From
 	}
 
 	// fetch rows if selecting from a table
