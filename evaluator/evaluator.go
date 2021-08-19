@@ -65,7 +65,7 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 	case *ast.Identifier:
 		if row.Values != nil && row.Aliases != nil {
 			for i := range row.Values {
-				if row.Aliases[i] == node.Value {
+				if row.Aliases[i] == node.Value && row.TableName[i] == node.Table {
 					return row.Values[i]
 				}
 			}
@@ -177,7 +177,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 	for _, identifier := range allIdentifiers {
 		tables, ok := columns[identifier.Value]
 		if !ok {
-			return newError("no such column: %s", identifier.Value)
+			return newError(`column "%s" does not exist`, identifier.Value)
 		}
 		if identifier.Table == "" && len(tables) > 1 {
 			return newError(`column reference "%s" is ambiguous`, identifier.Value)
