@@ -342,11 +342,13 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	row := object.Row{
-		Values: make([]object.Object, len(is.Expressions)),
+		Values:    make([]object.Object, len(is.Expressions)),
+		TableName: make([]string, len(is.Expressions)),
 	}
 	for i, es := range is.Expressions {
 		obj := Eval(backend, es)
 		row.Values[i] = obj
+		row.TableName[i] = is.TableName
 	}
 	if err := backend.InsertInto(is.TableName, row); err != nil {
 		return newError(err.Error())
