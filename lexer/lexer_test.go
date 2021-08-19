@@ -9,7 +9,7 @@ import (
 
 func TestExpressionValue(t *testing.T) {
 	input := `
-1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer insert into values from identifier_with_underscore;
+1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text float integer insert into values from identifier_with_underscore;
 order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int
 `
 	tests := []struct {
@@ -45,7 +45,7 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.CREATE, "CREATE"},
 		{token.TABLE, "TABLE"},
 		{token.TEXT_TYPE, "TEXT"},
-		{token.FLOAT_TYPE, "DOUBLE"},
+		{token.FLOAT_TYPE, "FLOAT"},
 		{token.INTEGER_TYPE, "INTEGER"},
 		{token.INSERT, "INSERT"},
 		{token.INTO, "INTO"},

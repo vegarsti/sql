@@ -906,7 +906,7 @@ func TestSelectWhere(t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	input := "create table foo (a text, b integer, c double, d bool, e boolean, f int)"
+	input := "create table foo (a text, b integer, c float, d bool, e boolean, f int)"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -1056,9 +1056,9 @@ func TestParseMultipleStatementsOK(t *testing.T) {
 		{"insert into foo values ('a', 'b', 'c')", 1},
 		{"insert into foo values ('a', 'b', 'c');", 1},
 		{"insert into foo values ('a', 'b', 'c'); select 1", 2},
-		{"create table foo (a text, b integer, c double);", 1},
-		{"create table foo (a text, b integer, c double); select 1", 2},
-		{"create table foo (a text, b integer, c double); select 1; insert into foo values ('a', 'b', 'c')", 3},
+		{"create table foo (a text, b integer, c float);", 1},
+		{"create table foo (a text, b integer, c float); select 1", 2},
+		{"create table foo (a text, b integer, c float); select 1; insert into foo values ('a', 'b', 'c')", 3},
 	}
 	for _, tt := range prefixTest {
 		l := lexer.New(tt.input)

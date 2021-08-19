@@ -55,7 +55,7 @@ const (
 
 	// Types
 	TEXT_TYPE    = "TEXT"
-	FLOAT_TYPE   = "DOUBLE"
+	FLOAT_TYPE   = "FLOAT"
 	INTEGER_TYPE = "INTEGER"
 	BOOLEAN_TYPE = "BOOLEAN"
 

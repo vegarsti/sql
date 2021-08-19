@@ -382,14 +382,14 @@ func TestEvalCreateTable(t *testing.T) {
 		expectedTable object.Table
 	}{
 		{
-			"create table foo (a text, b integer, c double)",
+			"create table foo (a text, b integer, c float)",
 			"foo",
 			object.Table{
 				Name: "foo",
 				Columns: []object.Column{
 					{Name: "a", Type: object.TEXT},
 					{Name: "b", Type: object.INTEGER},
-					{Name: "c", Type: object.DOUBLE},
+					{Name: "c", Type: object.FLOAT},
 				},
 			},
 		},
