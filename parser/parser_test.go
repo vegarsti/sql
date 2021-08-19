@@ -931,12 +931,12 @@ func TestCreateTable(t *testing.T) {
 	}
 
 	expectedColumns := map[string]token.Token{
-		"a": {Type: token.TEXT, Literal: token.TEXT},
-		"b": {Type: token.INTEGER, Literal: token.INTEGER},
-		"c": {Type: token.DOUBLE, Literal: token.DOUBLE},
-		"d": {Type: token.BOOLEAN, Literal: token.BOOLEAN},
-		"e": {Type: token.BOOLEAN, Literal: token.BOOLEAN},
-		"f": {Type: token.INTEGER, Literal: token.INTEGER},
+		"a": {Type: token.TEXT_TYPE, Literal: token.TEXT_TYPE},
+		"b": {Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
+		"c": {Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE},
+		"d": {Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
+		"e": {Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
+		"f": {Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
 	}
 
 	if len(stmt.Columns) != len(expectedColumns) {
@@ -983,9 +983,9 @@ func TestInsert(t *testing.T) {
 	}
 
 	expectedExpressions := []ast.Expression{
-		&ast.StringLiteral{Token: token.Token{Literal: "abc", Type: token.STRING}},
-		&ast.IntegerLiteral{Token: token.Token{Literal: "1", Type: token.INT}},
-		&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT}},
+		&ast.StringLiteral{Token: token.Token{Literal: "abc", Type: token.STRING_LITERAL}},
+		&ast.IntegerLiteral{Token: token.Token{Literal: "1", Type: token.INT_LITERAL}},
+		&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT_LITERAL}},
 	}
 
 	if len(stmt.Expressions) != len(expectedExpressions) {

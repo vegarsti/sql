@@ -101,17 +101,17 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.TABLE {
 				return token.Token{Type: token.TABLE, Literal: token.TABLE}
 			}
-			if strings.ToUpper(tok.Literal) == token.TEXT {
-				return token.Token{Type: token.TEXT, Literal: token.TEXT}
+			if strings.ToUpper(tok.Literal) == token.TEXT_TYPE {
+				return token.Token{Type: token.TEXT_TYPE, Literal: token.TEXT_TYPE}
 			}
-			if strings.ToUpper(tok.Literal) == token.DOUBLE {
-				return token.Token{Type: token.DOUBLE, Literal: token.DOUBLE}
+			if strings.ToUpper(tok.Literal) == token.FLOAT_TYPE {
+				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
 			}
-			if strings.ToUpper(tok.Literal) == token.INTEGER {
-				return token.Token{Type: token.INTEGER, Literal: token.INTEGER}
+			if strings.ToUpper(tok.Literal) == token.INTEGER_TYPE {
+				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
-			if strings.ToUpper(tok.Literal) == token.INT {
-				return token.Token{Type: token.INTEGER, Literal: token.INTEGER}
+			if strings.ToUpper(tok.Literal) == "INT" {
+				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
 			if strings.ToUpper(tok.Literal) == token.INSERT {
 				return token.Token{Type: token.INSERT, Literal: token.INSERT}
@@ -138,10 +138,10 @@ func (l *Lexer) NextToken() token.Token {
 				return token.Token{Type: token.ASC, Literal: token.ASC}
 			}
 			if strings.ToUpper(tok.Literal) == token.TRUE {
-				return token.Token{Type: token.BOOL, Literal: token.TRUE}
+				return token.Token{Type: token.BOOL_LITERAL, Literal: token.TRUE}
 			}
 			if strings.ToUpper(tok.Literal) == token.FALSE {
-				return token.Token{Type: token.BOOL, Literal: token.FALSE}
+				return token.Token{Type: token.BOOL_LITERAL, Literal: token.FALSE}
 			}
 			if strings.ToUpper(tok.Literal) == token.AND {
 				return token.Token{Type: token.AND, Literal: token.AND}
@@ -149,11 +149,11 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.OR {
 				return token.Token{Type: token.OR, Literal: token.OR}
 			}
-			if strings.ToUpper(tok.Literal) == token.BOOL {
-				return token.Token{Type: token.BOOLEAN, Literal: token.BOOLEAN}
+			if strings.ToUpper(tok.Literal) == "BOOL" {
+				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
 			}
-			if strings.ToUpper(tok.Literal) == token.BOOLEAN {
-				return token.Token{Type: token.BOOLEAN, Literal: token.BOOLEAN}
+			if strings.ToUpper(tok.Literal) == token.BOOLEAN_TYPE {
+				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
 			}
 			if strings.ToUpper(tok.Literal) == token.LIMIT {
 				return token.Token{Type: token.LIMIT, Literal: token.LIMIT}
@@ -190,13 +190,13 @@ func (l *Lexer) readNumber() token.Token {
 			l.readChar()
 		}
 		return token.Token{
-			Type:    token.FLOAT,
+			Type:    token.FLOAT_LITERAL,
 			Literal: l.input[position:l.position],
 		}
 	}
 
 	return token.Token{
-		Type:    token.INT,
+		Type:    token.INT_LITERAL,
 		Literal: l.input[position:l.position],
 	}
 }
@@ -266,7 +266,7 @@ func (l *Lexer) readString() token.Token {
 	literal := l.input[position:l.position]
 	l.readChar() // read second quote character
 	return token.Token{
-		Type:    token.STRING,
+		Type:    token.STRING_LITERAL,
 		Literal: literal,
 	}
 }

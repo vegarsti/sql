@@ -10,29 +10,29 @@ import (
 func TestExpressionValue(t *testing.T) {
 	input := `
 1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text double integer insert into values from identifier_with_underscore;
-order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name
+order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int
 `
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-		{token.INT, "1"},
+		{token.INT_LITERAL, "1"},
 		{token.PLUS, "+"},
-		{token.INT, "2"},
+		{token.INT_LITERAL, "2"},
 		{token.ASTERISK, "*"},
 		{token.LPAREN, "("},
-		{token.INT, "30"},
+		{token.INT_LITERAL, "30"},
 		{token.SLASH, "/"},
-		{token.INT, "5"},
+		{token.INT_LITERAL, "5"},
 		{token.RPAREN, ")"},
 		{token.MINUS, "-"},
-		{token.INT, "1"},
+		{token.INT_LITERAL, "1"},
 		{token.PLUS, "+"},
-		{token.FLOAT, "3.14"},
+		{token.FLOAT_LITERAL, "3.14"},
 		{token.PLUS, "+"},
-		{token.STRING, "abc"},
-		{token.FLOAT, "1.0"},
-		{token.STRING, "def"},
+		{token.STRING_LITERAL, "abc"},
+		{token.FLOAT_LITERAL, "1.0"},
+		{token.STRING_LITERAL, "def"},
 		{token.SELECT, "SELECT"},
 		{token.SELECT, "SELECT"},
 		{token.SELECT, "SELECT"},
@@ -44,9 +44,9 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.AS, "AS"},
 		{token.CREATE, "CREATE"},
 		{token.TABLE, "TABLE"},
-		{token.TEXT, "TEXT"},
-		{token.DOUBLE, "DOUBLE"},
-		{token.INTEGER, "INTEGER"},
+		{token.TEXT_TYPE, "TEXT"},
+		{token.FLOAT_TYPE, "DOUBLE"},
+		{token.INTEGER_TYPE, "INTEGER"},
 		{token.INSERT, "INSERT"},
 		{token.INTO, "INTO"},
 		{token.VALUES, "VALUES"},
@@ -57,12 +57,12 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.BY, "BY"},
 		{token.DESC, "DESC"},
 		{token.ASC, "ASC"},
-		{token.BOOL, "FALSE"},
-		{token.BOOL, "TRUE"},
+		{token.BOOL_LITERAL, "FALSE"},
+		{token.BOOL_LITERAL, "TRUE"},
 		{token.EQUALS, "="},
 		{token.NOTEQUALS, "!="},
 		{token.BANG, "!"},
-		{token.INT, "2"},
+		{token.INT_LITERAL, "2"},
 		{token.AND, "AND"},
 		{token.OR, "OR"},
 		{token.LIMIT, "LIMIT"},
@@ -73,6 +73,9 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.GREATERTHAN, ">"},
 		{token.GREATERTHANOREQUALS, ">="},
 		{token.QUALIFIEDIDENTIFIER, "table_name.column_name"},
+		{token.BOOLEAN_TYPE, "BOOLEAN"},
+		{token.BOOLEAN_TYPE, "BOOLEAN"},
+		{token.INTEGER_TYPE, "INTEGER"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {
