@@ -12,12 +12,12 @@ const (
 	EOF     = "EOF"
 
 	// Literals
-	INT                 = "INT"
-	FLOAT               = "FLOAT"
-	STRING              = "STRING"
+	INT_LITERAL         = "INT_LITERAL"
+	FLOAT_LITERAL       = "FLOAT_LITERAL"
+	STRING_LITERAL      = "STRING_LITERAL"
 	IDENTIFIER          = "IDENTIFIER"
 	QUALIFIEDIDENTIFIER = "QUALIFIEDIDENTIFIER"
-	BOOL                = "BOOL"
+	BOOL_LITERAL        = "BOOL_LITERAL"
 
 	// Operators
 	PLUS                = "+"
@@ -54,10 +54,10 @@ const (
 	WHERE  = "WHERE"
 
 	// Types
-	TEXT    = "TEXT"
-	DOUBLE  = "DOUBLE"
-	INTEGER = "INTEGER"
-	BOOLEAN = "BOOLEAN"
+	TEXT_TYPE    = "TEXT"
+	FLOAT_TYPE   = "DOUBLE"
+	INTEGER_TYPE = "INTEGER"
+	BOOLEAN_TYPE = "BOOLEAN"
 
 	// Delimiters
 	LPAREN    = "("

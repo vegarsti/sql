@@ -42,10 +42,10 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-	p.registerPrefix(token.INT, p.parseIntegerLiteral)
-	p.registerPrefix(token.BOOL, p.parseBooleanLiteral)
-	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
-	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.INT_LITERAL, p.parseIntegerLiteral)
+	p.registerPrefix(token.BOOL_LITERAL, p.parseBooleanLiteral)
+	p.registerPrefix(token.FLOAT_LITERAL, p.parseFloatLiteral)
+	p.registerPrefix(token.STRING_LITERAL, p.parseStringLiteral)
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
 	p.registerPrefix(token.QUALIFIEDIDENTIFIER, p.parseQualifiedIdentifier)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -320,7 +320,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 	}
 
 	if p.curToken.Type == token.LIMIT {
-		if !p.expectPeek(token.INT) {
+		if !p.expectPeek(token.INT_LITERAL) {
 			return nil
 		}
 		limit := p.parseIntegerLiteral()
@@ -339,7 +339,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 	}
 
 	if p.curToken.Type == token.OFFSET {
-		if !p.expectPeek(token.INT) {
+		if !p.expectPeek(token.INT_LITERAL) {
 			return nil
 		}
 		limit := p.parseIntegerLiteral()
@@ -398,7 +398,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 	columnLiteral := p.curToken.Literal
 
 	// assert next token is a column type
-	if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER || p.peekToken.Type == token.BOOLEAN) {
+	if !(p.peekToken.Type == token.TEXT_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
 		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 		return nil
 	}
@@ -416,7 +416,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		columnLiteral := p.curToken.Literal
 
 		// assert next token is a column type
-		if !(p.peekToken.Type == token.TEXT || p.peekToken.Type == token.DOUBLE || p.peekToken.Type == token.INTEGER || p.peekToken.Type == token.BOOLEAN) {
+		if !(p.peekToken.Type == token.TEXT_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
 			p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 			return nil
 		}
