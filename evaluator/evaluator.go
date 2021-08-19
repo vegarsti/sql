@@ -179,7 +179,10 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		if !ok {
 			return newError(`column "%s" does not exist`, identifier.Value)
 		}
-		if identifier.Table == "" && len(tables) > 1 {
+		if identifier.Table != "" {
+			continue
+		}
+		if len(tables) > 1 {
 			return newError(`column reference "%s" is ambiguous`, identifier.Value)
 		}
 		var table string
