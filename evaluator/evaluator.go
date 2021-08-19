@@ -70,7 +70,10 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 				}
 			}
 		}
-		panic(fmt.Sprintf("no such column: %s", node.Value))
+		if node.Table != "" {
+			return newError("column: %s.%s does not exist", node.Table, node.Value)
+		}
+		return newError("no such column: %s", node.Value)
 	default:
 		return newError("unknown expression type %T", node)
 	}
