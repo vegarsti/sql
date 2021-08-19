@@ -75,7 +75,7 @@ type DataType string
 const (
 	TEXT    = "TEXT"
 	INTEGER = "INTEGER"
-	DOUBLE  = "DOUBLE"
+	FLOAT   = "FLOAT"
 )
 
 type Table struct {
