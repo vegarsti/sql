@@ -133,13 +133,13 @@ func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
 
-func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object {
+func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
 	// 1) Traverse tree looking for any column identifiers
 	// 2) Get rows from backend if applicable
 	// 3) For each row, evaluate expression
 
 	columns := make(map[string]map[string]bool)
-	for _, from := range ss.From {
+	for _, from := range stmt.From {
 		for _, c := range backend.ColumnsInTable(from) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
@@ -150,21 +150,21 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 
 	// gather pointers to all identifiers used in statement
 	var allIdentifiers []*ast.Identifier
-	for _, expr := range ss.Expressions {
+	for _, expr := range stmt.Expressions {
 		ids, err := identifiersInExpression(expr)
 		if err != nil {
 			return newError(err.Error())
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
-	if ss.Where != nil {
-		ids, err := identifiersInExpression(ss.Where)
+	if stmt.Where != nil {
+		ids, err := identifiersInExpression(stmt.Where)
 		if err != nil {
 			return newError(err.Error())
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
-	for _, orderBy := range ss.OrderBy {
+	for _, orderBy := range stmt.OrderBy {
 		ids, err := identifiersInExpression(orderBy.Expression)
 		if err != nil {
 			return newError(err.Error())
@@ -178,7 +178,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		// but not selecting from `table_name`
 		if id.Table != "" {
 			missingFrom := true
-			for _, from := range ss.From {
+			for _, from := range stmt.From {
 				if id.Table == from {
 					missingFrom = false
 				}
@@ -210,16 +210,16 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 
 	// fetch rows
 	rows := []object.Row{{}}
-	if len(ss.From) > 0 {
-		r, err := backend.Rows(ss.From[0])
+	if len(stmt.From) > 0 {
+		r, err := backend.Rows(stmt.From[0])
 		if err != nil {
 			return newError(err.Error())
 		}
 		rows = r
 	}
 	// do cartesian join if more than one from-table
-	if len(ss.From) > 1 {
-		for _, from := range ss.From[1:] {
+	if len(stmt.From) > 1 {
+		for _, from := range stmt.From[1:] {
 			var newRows []object.Row
 			r, err := backend.Rows(from)
 			if err != nil {
@@ -237,21 +237,21 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 
 	// iterate over rows and evaluate expressions for each row
 	rowsToReturn := make([]*object.Row, 0)
-	aliases := ss.Aliases
+	aliases := stmt.Aliases
 	for _, backendRow := range rows {
 		row := &object.Row{
-			Aliases:      ss.Aliases,
-			Values:       make([]object.Object, len(ss.Expressions)),
-			SortByValues: make([]object.SortBy, len(ss.OrderBy)),
+			Aliases:      stmt.Aliases,
+			Values:       make([]object.Object, len(stmt.Expressions)),
+			SortByValues: make([]object.SortBy, len(stmt.OrderBy)),
 		}
-		for i, e := range ss.Expressions {
+		for i, e := range stmt.Expressions {
 			row.Values[i] = evalExpression(backendRow, e)
 			if isError(row.Values[i]) {
 				return row.Values[i]
 			}
 		}
-		if ss.Where != nil {
-			v := evalExpression(backendRow, ss.Where)
+		if stmt.Where != nil {
+			v := evalExpression(backendRow, stmt.Where)
 			if isError(v) {
 				return v
 			}
@@ -263,7 +263,7 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 				continue
 			}
 		}
-		for i, e := range ss.OrderBy {
+		for i, e := range stmt.OrderBy {
 			v := evalExpression(backendRow, e.Expression)
 			if isError(v) {
 				return v
@@ -274,24 +274,24 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		rowsToReturn = append(rowsToReturn, row)
 	}
 	// Populate aliases
-	for i, alias := range ss.Aliases {
+	for i, alias := range stmt.Aliases {
 		if alias == "" {
-			aliases[i] = ss.Expressions[i].String()
+			aliases[i] = stmt.Expressions[i].String()
 		}
 	}
 	// Sort
-	if len(ss.OrderBy) != 0 {
+	if len(stmt.OrderBy) != 0 {
 		sortRows(rowsToReturn)
 	}
 	// Limit
-	if ss.Limit != nil {
+	if stmt.Limit != nil {
 		offset := 0
-		if ss.Offset != nil {
-			offset = *ss.Offset
+		if stmt.Offset != nil {
+			offset = *stmt.Offset
 		}
 		end := len(rowsToReturn)
-		if len(rowsToReturn) > offset+*ss.Limit {
-			end = offset + *ss.Limit
+		if len(rowsToReturn) > offset+*stmt.Limit {
+			end = offset + *stmt.Limit
 		}
 		if end < offset {
 			offset = 0
