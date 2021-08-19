@@ -557,7 +557,8 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "efg"},
 					&object.Integer{Value: 1},
 				},
-				Aliases: []string{"a", "b"},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
 			},
 			{
 				Values: []object.Object{
@@ -565,10 +566,11 @@ func TestEvalSelectFrom(t *testing.T) {
 					&object.String{Value: "def"},
 					&object.Integer{Value: 2},
 				},
-				Aliases: []string{"a", "b"},
+				Aliases:   []string{"a", "b", "c"},
+				TableName: []string{"foo", "foo", "foo"},
 			},
 		}
-		backend.columns["foo"] = []string{"a", "b"}
+		backend.columns["foo"] = []string{"a", "b", "c"}
 		evaluated := testEval(backend, tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
@@ -588,7 +590,6 @@ func TestEvalSelectFrom(t *testing.T) {
 			t.Fatalf("expected row to contain %d element. got=%d", len(tt.expected[0]), len(row1.Values))
 		}
 		for i := range row1.Values {
-			// log.Println(row1.Values[i])
 			testStringObject(t, row1.Values[i], tt.expected[0][i])
 		}
 		if len(result.Rows) == 1 {

@@ -208,7 +208,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
 		From:        "",
-		OrderBy:     make([]ast.OrderByExpression, 0),
+		OrderBy:     make([]*ast.OrderByExpression, 0),
 		Limit:       nil,
 		Where:       nil,
 	}
@@ -281,7 +281,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		if sortExpr == nil {
 			return nil
 		}
-		orderBy := ast.OrderByExpression{Expression: sortExpr}
+		orderBy := &ast.OrderByExpression{Expression: sortExpr}
 		p.nextToken()
 		if p.curToken.Type == token.DESC {
 			orderBy.Descending = true
@@ -296,7 +296,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			if sortExpr == nil {
 				return nil
 			}
-			orderBy := ast.OrderByExpression{Expression: sortExpr}
+			orderBy := &ast.OrderByExpression{Expression: sortExpr}
 			p.nextToken()
 			if p.curToken.Type == token.DESC {
 				orderBy.Descending = true
