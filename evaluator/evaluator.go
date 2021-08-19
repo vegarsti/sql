@@ -90,6 +90,19 @@ func evalStatements(backend Backend, stmts []ast.Statement) object.Object {
 	return result
 }
 
+// concatenateRows by simply splicing the tuples together.
+// Used when joining tables
+func concatenateRows(row1 object.Row, row2 object.Row) object.Row {
+	aliases := append(row1.Aliases, row2.Aliases...)
+	values := append(row1.Values, row2.Values...)
+	tableNames := append(row1.TableName, row2.TableName...)
+	return object.Row{
+		Aliases:   aliases,
+		Values:    values,
+		TableName: tableNames,
+	}
+}
+
 // identifiersInExpression walks the node and returns a slice of all identifiers as strings
 func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 	switch node := node.(type) {
@@ -195,16 +208,21 @@ func evalSelectStatement(backend Backend, ss *ast.SelectStatement) object.Object
 		identifier.Table = table
 	}
 
-	// fetch rows if selecting from a table
-	var rows []object.Row
-	var err error
-	if len(ss.From) != 0 {
-		rows, err = backend.Rows(ss.From[0])
+	// fetch rows
+	rows := []object.Row{{}}
+	for _, from := range ss.From {
+		var newRows []object.Row
+		r, err := backend.Rows(from)
 		if err != nil {
 			return newError(err.Error())
 		}
-	} else {
-		rows = []object.Row{{}}
+		for _, row1 := range rows {
+			for _, row2 := range r {
+				newRow := concatenateRows(row1, row2)
+				newRows = append(newRows, newRow)
+			}
+		}
+		rows = newRows
 	}
 
 	// iterate over rows and evaluate expressions for each row
