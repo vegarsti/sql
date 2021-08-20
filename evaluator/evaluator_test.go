@@ -586,6 +586,36 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a, a",
 		},
 		{
+			"select foo.a, bar.a from foo join bar on true",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+					},
+				},
+			},
+			"a, a",
+		},
+		{
 			"select b from foo order by b",
 			[]object.Row{
 				{
@@ -739,12 +769,12 @@ func TestEvalSelectFrom(t *testing.T) {
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
-				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+				t.Fatalf("%s: %s", tt.input, errorEvaluated.Inspect())
 			}
 			t.Fatalf("object is not Result. got=%T", evaluated)
 		}
 		if len(result.Rows) != len(tt.expected) {
-			t.Fatalf("expected result to contain %d rows. got=%d", len(tt.expected), len(result.Rows))
+			t.Fatalf("%s: expected result to contain %d rows. got=%d", tt.input, len(tt.expected), len(result.Rows))
 		}
 		if len(result.Rows) == 0 {
 			continue
