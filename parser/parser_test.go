@@ -1092,3 +1092,75 @@ func TestParseMultipleStatementsError(t *testing.T) {
 		}
 	}
 }
+
+func TestSelectJoin(t *testing.T) {
+	input := "select a from foo join bar on foo.a = bar.b, baz join qux on x = y"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral := "a"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Fatalf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	}
+
+	expectedFromLength := 2
+	if len(stmt.From) != expectedFromLength {
+		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLength, len(stmt.From))
+	}
+
+	expectedFrom1 := "foo"
+	if stmt.From[0].Table != expectedFrom1 {
+		t.Fatalf("stmt.From[0].Table not %s. got=%s", expectedFrom1, stmt.From[0].Table)
+	}
+	if stmt.From[0].Join == nil {
+		t.Fatalf("stmt.From[0].Join is nil")
+	}
+	expectedJoinTable1 := "bar"
+	if stmt.From[0].Join.Table != expectedJoinTable1 {
+		t.Fatalf("stmt.From[0].Join.Table is not %s. got=%s", expectedJoinTable1, stmt.From[0].Join.Table)
+	}
+	expectedJoinPred1 := "(a = b)"
+	if stmt.From[0].Join.Predicate.String() != expectedJoinPred1 {
+		t.Fatalf("stmt.From[0].Join.Predicate is not %s. got=%s", expectedJoinPred1, stmt.From[0].Join.Predicate)
+	}
+
+	expectedFrom2 := "baz"
+	if stmt.From[1].Table != expectedFrom2 {
+		t.Fatalf("stmt.From[1].Table not %s. got=%s", expectedFrom2, stmt.From[1].Table)
+	}
+	if stmt.From[1].Join == nil {
+		t.Fatalf("stmt.From[1].Join is nil")
+	}
+	expectedJoinTable2 := "qux"
+	if stmt.From[1].Join.Table != expectedJoinTable2 {
+		t.Fatalf("stmt.From[1].Join.Table is not %s. got=%s", expectedJoinTable2, stmt.From[1].Join.Table)
+	}
+	expectedJoinPred2 := "(x = y)"
+	if stmt.From[1].Join.Predicate.String() != expectedJoinPred2 {
+		t.Fatalf("stmt.From[1].Join.Predicate is not %s. got=%s", expectedJoinPred2, stmt.From[1].Join.Predicate)
+	}
+}
