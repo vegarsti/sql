@@ -225,8 +225,8 @@ func TestSelectErrors(t *testing.T) {
 
 		// table `foo`
 		backend.tables["foo"] = []object.Column{
-			{Name: "a", Type: object.TEXT},
-			{Name: "b", Type: object.TEXT},
+			{Name: "a", Type: object.STRING},
+			{Name: "b", Type: object.STRING},
 			{Name: "c", Type: object.INTEGER},
 		}
 		backend.rows["foo"] = []object.Row{
@@ -252,7 +252,7 @@ func TestSelectErrors(t *testing.T) {
 		backend.columns["foo"] = []string{"a", "b", "c"}
 
 		// table `bar`
-		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.TEXT}}
+		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.STRING}}
 		backend.columns["bar"] = []string{"a"}
 
 		evaluated := testEval(backend, tt.input)
@@ -387,7 +387,7 @@ func TestEvalCreateTable(t *testing.T) {
 			object.Table{
 				Name: "foo",
 				Columns: []object.Column{
-					{Name: "a", Type: object.TEXT},
+					{Name: "a", Type: object.STRING},
 					{Name: "b", Type: object.INTEGER},
 					{Name: "c", Type: object.FLOAT},
 				},
@@ -687,8 +687,8 @@ func TestEvalSelectFrom(t *testing.T) {
 
 		// table `foo`
 		backend.tables["foo"] = []object.Column{
-			{Name: "a", Type: object.TEXT},
-			{Name: "b", Type: object.TEXT},
+			{Name: "a", Type: object.STRING},
+			{Name: "b", Type: object.STRING},
 			{Name: "c", Type: object.INTEGER},
 		}
 		backend.rows["foo"] = []object.Row{
@@ -715,7 +715,7 @@ func TestEvalSelectFrom(t *testing.T) {
 
 		// table `bar`
 		backend.tables["bar"] = []object.Column{
-			{Name: "a", Type: object.TEXT},
+			{Name: "a", Type: object.STRING},
 		}
 		backend.rows["bar"] = []object.Row{
 			{

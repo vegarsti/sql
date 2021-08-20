@@ -931,7 +931,7 @@ func TestCreateTable(t *testing.T) {
 	}
 
 	expectedColumns := map[string]token.Token{
-		"a": {Type: token.TEXT_TYPE, Literal: token.TEXT_TYPE},
+		"a": {Type: token.STRING_TYPE, Literal: token.STRING_TYPE},
 		"b": {Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
 		"c": {Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE},
 		"d": {Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},

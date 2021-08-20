@@ -73,7 +73,7 @@ func (r *Result) SortValue() float64 { panic("a result doesn't have a sort value
 type DataType string
 
 const (
-	TEXT    = "TEXT"
+	STRING  = "STRING"
 	INTEGER = "INTEGER"
 	FLOAT   = "FLOAT"
 )
