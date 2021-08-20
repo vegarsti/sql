@@ -207,7 +207,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
-		From:        make([]string, 0),
+		From:        make([]*ast.From, 0),
 		OrderBy:     make([]*ast.OrderByExpression, 0),
 		Limit:       nil,
 		Where:       nil,
@@ -261,7 +261,8 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 			return nil
 		}
-		stmt.From = append(stmt.From, p.curToken.Literal)
+		from := &ast.From{Table: p.curToken.Literal}
+		stmt.From = append(stmt.From, from)
 		p.nextToken()
 	}
 
@@ -272,7 +273,8 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 			return nil
 		}
-		stmt.From = append(stmt.From, p.curToken.Literal)
+		from := &ast.From{Table: p.curToken.Literal}
+		stmt.From = append(stmt.From, from)
 		p.nextToken()
 	}
 
