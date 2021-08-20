@@ -146,6 +146,12 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			}
 			columns[c][from.Table] = true
 		}
+		for _, c := range backend.ColumnsInTable(from.Join.Table) {
+			if _, ok := columns[c]; !ok {
+				columns[c] = make(map[string]bool)
+			}
+			columns[c][from.Join.Table] = true
+		}
 	}
 
 	// gather pointers to all identifiers used in statement
@@ -156,6 +162,15 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			return newError(err.Error())
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
+	}
+	for _, from := range stmt.From {
+		if from.Join != nil {
+			ids, err := identifiersInExpression(from.Join.Predicate)
+			if err != nil {
+				return newError(err.Error())
+			}
+			allIdentifiers = append(allIdentifiers, ids...)
+		}
 	}
 	if stmt.Where != nil {
 		ids, err := identifiersInExpression(stmt.Where)
