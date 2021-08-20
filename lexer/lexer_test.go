@@ -9,8 +9,8 @@ import (
 
 func TestExpressionValue(t *testing.T) {
 	input := `
-1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT aWord , AS as aS As create table text float integer insert into values from identifier_with_underscore;
-order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int double char text varchar string
+1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT an_identifier , AS as aS As create table text float integer insert into values from identifier_with_underscore;
+order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int double char text varchar string Identifier
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -36,7 +36,7 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.SELECT, "SELECT"},
 		{token.SELECT, "SELECT"},
 		{token.SELECT, "SELECT"},
-		{token.IDENTIFIER, "aWord"},
+		{token.IDENTIFIER, "an_identifier"},
 		{token.COMMA, ","},
 		{token.AS, "AS"},
 		{token.AS, "AS"},
@@ -81,6 +81,7 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.STRING_TYPE, "STRING"},
 		{token.STRING_TYPE, "STRING"},
 		{token.STRING_TYPE, "STRING"},
+		{token.ILLEGAL, "Identifier"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {

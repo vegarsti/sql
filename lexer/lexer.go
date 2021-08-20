@@ -185,6 +185,11 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.WHERE {
 				return token.Token{Type: token.WHERE, Literal: token.WHERE}
 			}
+			for _, ch := range tok.Literal {
+				if isUppercase(byte(ch)) {
+					return token.Token{Type: token.ILLEGAL, Literal: tok.Literal}
+				}
+			}
 			return tok
 		}
 		tok = newToken(token.ILLEGAL, l.ch)
@@ -251,10 +256,16 @@ func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
 
+func isLowercase(ch byte) bool {
+	return 'a' <= ch && ch <= 'z'
+}
+
+func isUppercase(ch byte) bool {
+	return 'A' <= ch && ch <= 'Z'
+}
+
 func isLetter(ch byte) bool {
-	isLowercase := 'a' <= ch && ch <= 'z'
-	isUppercase := 'A' <= ch && ch <= 'Z'
-	return isLowercase || isUppercase
+	return isLowercase(ch) || isUppercase(ch)
 }
 
 func isDot(ch byte) bool {
