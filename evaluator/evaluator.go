@@ -71,7 +71,7 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 			}
 		}
 		if node.Table != "" {
-			return newError("column: %s.%s does not exist", node.Table, node.Value)
+			return newError("column %s.%s does not exist", node.Table, node.Value)
 		}
 		return newError("no such column: %s", node.Value)
 	default:
@@ -146,11 +146,13 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			}
 			columns[c][from.Table] = true
 		}
-		for _, c := range backend.ColumnsInTable(from.Join.Table) {
-			if _, ok := columns[c]; !ok {
-				columns[c] = make(map[string]bool)
+		if from.Join != nil {
+			for _, c := range backend.ColumnsInTable(from.Join.Table) {
+				if _, ok := columns[c]; !ok {
+					columns[c] = make(map[string]bool)
+				}
+				columns[c][from.Join.Table] = true
 			}
-			columns[c][from.Join.Table] = true
 		}
 	}
 
@@ -197,6 +199,11 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 				if id.Table == from.Table {
 					missingFrom = false
 				}
+				if from.Join != nil {
+					if id.Table == from.Join.Table {
+						missingFrom = false
+					}
+				}
 			}
 			if missingFrom {
 				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
@@ -225,24 +232,39 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 
 	// fetch rows
 	rows := []object.Row{{}}
-	if len(stmt.From) > 0 {
-		r, err := backend.Rows(stmt.From[0].Table)
+	for _, from := range stmt.From {
+		r, err := backend.Rows(from.Table)
 		if err != nil {
 			return newError(err.Error())
 		}
-		rows = r
-	}
-	// do cartesian join if more than one from-table
-	if len(stmt.From) > 1 {
-		for _, from := range stmt.From[1:] {
-			var newRows []object.Row
-			r, err := backend.Rows(from.Table)
+		var newRows []object.Row
+		for _, row1 := range rows {
+			for _, row2 := range r {
+				newRow := concatenateRows(row1, row2)
+				newRows = append(newRows, newRow)
+			}
+		}
+		rows = newRows
+		if from.Join != nil {
+			newRows = []object.Row{}
+			r, err = backend.Rows(from.Join.Table)
 			if err != nil {
 				return newError(err.Error())
 			}
 			for _, row1 := range rows {
 				for _, row2 := range r {
 					newRow := concatenateRows(row1, row2)
+					v := evalExpression(newRow, from.Join.Predicate)
+					if isError(v) {
+						return v
+					}
+					include, ok := v.(*object.Boolean)
+					if !ok {
+						return newError("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
+					}
+					if !include.Value {
+						continue
+					}
 					newRows = append(newRows, newRow)
 				}
 			}
