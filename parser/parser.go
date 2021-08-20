@@ -398,7 +398,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 	columnLiteral := p.curToken.Literal
 
 	// assert next token is a column type
-	if !(p.peekToken.Type == token.TEXT_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
+	if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
 		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 		return nil
 	}
@@ -416,7 +416,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		columnLiteral := p.curToken.Literal
 
 		// assert next token is a column type
-		if !(p.peekToken.Type == token.TEXT_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
+		if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
 			p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
 			return nil
 		}

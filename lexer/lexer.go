@@ -101,18 +101,45 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.TABLE {
 				return token.Token{Type: token.TABLE, Literal: token.TABLE}
 			}
-			if strings.ToUpper(tok.Literal) == token.TEXT_TYPE {
-				return token.Token{Type: token.TEXT_TYPE, Literal: token.TEXT_TYPE}
+
+			// string type
+			if strings.ToUpper(tok.Literal) == token.STRING_TYPE {
+				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
 			}
+			if strings.ToUpper(tok.Literal) == "CHAR" {
+				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
+			}
+			if strings.ToUpper(tok.Literal) == "TEXT" {
+				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
+			}
+			if strings.ToUpper(tok.Literal) == "VARCHAR" {
+				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
+			}
+
+			// float type
 			if strings.ToUpper(tok.Literal) == token.FLOAT_TYPE {
 				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
 			}
+			if strings.ToUpper(tok.Literal) == "DOUBLE" {
+				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
+			}
+
+			// int type
 			if strings.ToUpper(tok.Literal) == token.INTEGER_TYPE {
 				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
 			if strings.ToUpper(tok.Literal) == "INT" {
 				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
+
+			// bool type
+			if strings.ToUpper(tok.Literal) == token.BOOLEAN_TYPE {
+				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
+			}
+			if strings.ToUpper(tok.Literal) == "BOOL" {
+				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
+			}
+
 			if strings.ToUpper(tok.Literal) == token.INSERT {
 				return token.Token{Type: token.INSERT, Literal: token.INSERT}
 			}
@@ -148,12 +175,6 @@ func (l *Lexer) NextToken() token.Token {
 			}
 			if strings.ToUpper(tok.Literal) == token.OR {
 				return token.Token{Type: token.OR, Literal: token.OR}
-			}
-			if strings.ToUpper(tok.Literal) == "BOOL" {
-				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == token.BOOLEAN_TYPE {
-				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
 			}
 			if strings.ToUpper(tok.Literal) == token.LIMIT {
 				return token.Token{Type: token.LIMIT, Literal: token.LIMIT}
