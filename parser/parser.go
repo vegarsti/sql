@@ -262,8 +262,28 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			return nil
 		}
 		from := &ast.From{Table: p.curToken.Literal}
-		stmt.From = append(stmt.From, from)
 		p.nextToken()
+
+		if p.curToken.Type == token.JOIN {
+			p.nextToken()
+			// assert next token is a table name
+			if p.curToken.Type != token.IDENTIFIER {
+				p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+				return nil
+			}
+			table := p.curToken.Literal
+			if !p.expectPeek(token.ON) {
+				return nil
+			}
+			p.nextToken()
+			joinExpr := p.parseExpression(LOWEST)
+			from.Join = &ast.Join{
+				Table:     table,
+				Predicate: joinExpr,
+			}
+			p.nextToken()
+		}
+		stmt.From = append(stmt.From, from)
 	}
 
 	for p.curToken.Type == token.COMMA {
@@ -274,8 +294,28 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			return nil
 		}
 		from := &ast.From{Table: p.curToken.Literal}
-		stmt.From = append(stmt.From, from)
 		p.nextToken()
+
+		if p.curToken.Type == token.JOIN {
+			p.nextToken()
+			// assert next token is a table name
+			if p.curToken.Type != token.IDENTIFIER {
+				p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+				return nil
+			}
+			table := p.curToken.Literal
+			if !p.expectPeek(token.ON) {
+				return nil
+			}
+			p.nextToken()
+			joinExpr := p.parseExpression(LOWEST)
+			from.Join = &ast.Join{
+				Table:     table,
+				Predicate: joinExpr,
+			}
+			p.nextToken()
+		}
+		stmt.From = append(stmt.From, from)
 	}
 
 	if p.curToken.Type == token.WHERE {
