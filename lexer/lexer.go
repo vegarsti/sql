@@ -185,6 +185,12 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.WHERE {
 				return token.Token{Type: token.WHERE, Literal: token.WHERE}
 			}
+			if strings.ToUpper(tok.Literal) == token.JOIN {
+				return token.Token{Type: token.JOIN, Literal: token.JOIN}
+			}
+			if strings.ToUpper(tok.Literal) == token.ON {
+				return token.Token{Type: token.ON, Literal: token.ON}
+			}
 			for _, ch := range tok.Literal {
 				if isUppercase(byte(ch)) {
 					return token.Token{Type: token.ILLEGAL, Literal: tok.Literal}

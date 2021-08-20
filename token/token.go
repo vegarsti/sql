@@ -52,6 +52,8 @@ const (
 	LIMIT  = "LIMIT"
 	OFFSET = "OFFSET"
 	WHERE  = "WHERE"
+	JOIN   = "JOIN"
+	ON     = "ON"
 
 	// Types
 	STRING_TYPE  = "STRING"
