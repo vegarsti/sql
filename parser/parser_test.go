@@ -582,12 +582,12 @@ func TestSelectCartesianJoin(t *testing.T) {
 	}
 
 	expectedFrom1 := "a"
-	if stmt.From[0] != expectedFrom1 {
-		t.Fatalf("stmt.From[0] not %s. got=%s", expectedFrom1, stmt.From[0])
+	if stmt.From[0].Table != expectedFrom1 {
+		t.Fatalf("stmt.From[0] not %s. got=%s", expectedFrom1, stmt.From[0].Table)
 	}
 	expectedFrom2 := "b"
-	if stmt.From[1] != expectedFrom2 {
-		t.Fatalf("stmt.From[1] not %s. got=%s", expectedFrom2, stmt.From[1])
+	if stmt.From[1].Table != expectedFrom2 {
+		t.Fatalf("stmt.From[1] not %s. got=%s", expectedFrom2, stmt.From[1].Table)
 	}
 
 	checkParserErrors(t, p)
@@ -767,8 +767,8 @@ func TestSelectOrderBy(t *testing.T) {
 	if len(stmt.From) != expectedFromLen {
 		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
 	}
-	if stmt.From[0] != expectedFrom {
-		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	if stmt.From[0].Table != expectedFrom {
+		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From[0].Table)
 	}
 
 	expectedOrderBy := []string{"a", "(b + 1)"}
@@ -831,8 +831,8 @@ func TestSelectLimit(t *testing.T) {
 	if len(stmt.From) != expectedFromLen {
 		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
 	}
-	if stmt.From[0] != expectedFrom {
-		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	if stmt.From[0].Table != expectedFrom {
+		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From[0].Table)
 	}
 
 	expectedLimit := 1
@@ -891,8 +891,8 @@ func TestSelectWhere(t *testing.T) {
 	if len(stmt.From) != expectedFromLen {
 		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
 	}
-	if stmt.From[0] != expectedFrom {
-		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	if stmt.From[0].Table != expectedFrom {
+		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From[0].Table)
 	}
 
 	if stmt.Where == nil {
@@ -1041,8 +1041,8 @@ func TestSelectFrom(t *testing.T) {
 	if len(stmt.From) != expectedFromLen {
 		t.Fatalf("stmt.From not length %d. got=%d", expectedFromLen, len(stmt.From))
 	}
-	if stmt.From[0] != expectedFrom {
-		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From)
+	if stmt.From[0].Table != expectedFrom {
+		t.Fatalf("stmt.From not %s. got=%s", expectedFrom, stmt.From[0].Table)
 	}
 }
 

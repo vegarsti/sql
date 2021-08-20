@@ -140,11 +140,11 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 
 	columns := make(map[string]map[string]bool)
 	for _, from := range stmt.From {
-		for _, c := range backend.ColumnsInTable(from) {
+		for _, c := range backend.ColumnsInTable(from.Table) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
 			}
-			columns[c][from] = true
+			columns[c][from.Table] = true
 		}
 	}
 
@@ -179,7 +179,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		if id.Table != "" {
 			missingFrom := true
 			for _, from := range stmt.From {
-				if id.Table == from {
+				if id.Table == from.Table {
 					missingFrom = false
 				}
 			}
@@ -211,7 +211,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	// fetch rows
 	rows := []object.Row{{}}
 	if len(stmt.From) > 0 {
-		r, err := backend.Rows(stmt.From[0])
+		r, err := backend.Rows(stmt.From[0].Table)
 		if err != nil {
 			return newError(err.Error())
 		}
@@ -221,7 +221,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	if len(stmt.From) > 1 {
 		for _, from := range stmt.From[1:] {
 			var newRows []object.Row
-			r, err := backend.Rows(from)
+			r, err := backend.Rows(from.Table)
 			if err != nil {
 				return newError(err.Error())
 			}
