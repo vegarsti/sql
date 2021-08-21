@@ -27,9 +27,17 @@ type OrderByExpression struct {
 	Descending bool
 }
 
+type JoinType string
+
+const (
+	CROSSJOIN = "CROSS"
+	INNERJOIN = "INNER"
+)
+
 type Join struct {
 	Table     string
 	Predicate Expression
+	JoinType  JoinType
 }
 
 type From struct {
