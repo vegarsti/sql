@@ -930,29 +930,41 @@ func TestCreateTable(t *testing.T) {
 		t.Fatalf("ast.CreateTableStatement is nil")
 	}
 
-	expectedColumns := map[string]token.Token{
-		"a": {Type: token.STRING_TYPE, Literal: token.STRING_TYPE},
-		"b": {Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
-		"c": {Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE},
-		"d": {Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
-		"e": {Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
-		"f": {Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
+	expectedColumnNames := []string{
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
 	}
 
-	if len(stmt.Columns) != len(expectedColumns) {
-		t.Fatalf("stmt does not contain %d columns. got=%d", len(stmt.Columns), len(expectedColumns))
+	expectedColumnTypes := []token.Token{
+		{Type: token.STRING_TYPE, Literal: token.STRING_TYPE},
+		{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
+		{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE},
+		{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
+		{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE},
+		{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE},
 	}
 
-	for name, expectedToken := range expectedColumns {
-		column, ok := stmt.Columns[name]
-		if !ok {
-			t.Fatalf("stmt does not contain column %s", name)
+	if len(stmt.ColumnNames) != len(expectedColumnNames) {
+		t.Fatalf("stmt does not contain %d column names. got=%d", len(stmt.ColumnNames), len(expectedColumnNames))
+	}
+	if len(stmt.ColumnTypes) != len(expectedColumnTypes) {
+		t.Fatalf("stmt does not contain %d column types. got=%d", len(stmt.ColumnTypes), len(expectedColumnTypes))
+	}
+
+	for i := range expectedColumnNames {
+		if stmt.ColumnNames[i] != expectedColumnNames[i] {
+			t.Fatalf("expected column name %s. got=%s", expectedColumnNames[i], stmt.ColumnNames[i])
 		}
-		if column.Literal != expectedToken.Literal {
-			t.Fatalf("expected token literal %s for column %s. got=%s", expectedToken.Literal, name, column.Literal)
+		name := stmt.ColumnNames[i]
+		if stmt.ColumnTypes[i].Literal != expectedColumnTypes[i].Literal {
+			t.Fatalf("expected token literal %s for column %s. got=%s", expectedColumnTypes[i].Literal, name, stmt.ColumnTypes[i].Literal)
 		}
-		if stmt.Columns[name].Type != expectedToken.Type {
-			t.Fatalf("expected token type %T for column %s. got=%T", expectedToken.Type, name, column.Type)
+		if stmt.ColumnTypes[i].Type != expectedColumnTypes[i].Type {
+			t.Fatalf("expected token type %T for column %s. got=%T", expectedColumnTypes[i].Type, name, stmt.ColumnTypes[i].Type)
 		}
 	}
 }
