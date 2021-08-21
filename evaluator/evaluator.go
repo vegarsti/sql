@@ -365,14 +365,12 @@ func sortRows(rows []*object.Row) {
 }
 
 func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {
-	columns := make([]object.Column, len(cst.Columns))
-	i := 0
-	for name, typeToken := range cst.Columns {
+	columns := make([]object.Column, len(cst.ColumnNames))
+	for i := range cst.ColumnNames {
 		columns[i] = object.Column{
-			Name: name,
-			Type: object.DataType(typeToken.Literal), // This should always be valid since it has parsed successfully
+			Name: cst.ColumnNames[i],
+			Type: object.DataType(cst.ColumnTypes[i].Literal), // This should always be valid since it has parsed successfully
 		}
-		i++
 	}
 	if err := backend.CreateTable(cst.Name, columns); err != nil {
 		return newError(err.Error())
@@ -381,9 +379,11 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 }
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
+	columns := backend.ColumnsInTable(is.TableName)
 	row := object.Row{
 		Values:    make([]object.Object, len(is.Expressions)),
 		TableName: make([]string, len(is.Expressions)),
+		Aliases:   columns,
 	}
 	for i, es := range is.Expressions {
 		obj := Eval(backend, es)

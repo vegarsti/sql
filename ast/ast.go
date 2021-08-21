@@ -70,22 +70,18 @@ func (es *SelectStatement) String() string {
 }
 
 type CreateTableStatement struct {
-	Token   token.Token // the CREATE token
-	Name    string
-	Columns map[string]token.Token
+	Token       token.Token // the CREATE token
+	Name        string
+	ColumnNames []string
+	ColumnTypes []token.Token
 }
 
 func (cts *CreateTableStatement) statementNode()       {}
 func (cts *CreateTableStatement) TokenLiteral() string { return cts.Token.Literal }
 func (cts *CreateTableStatement) String() string {
-	if len(cts.Columns) == 0 {
-		return ""
-	}
-	columns := make([]string, len(cts.Columns))
-	i := 0
-	for name, tok := range cts.Columns {
-		columns[i] = name + " " + tok.Literal
-		i++
+	columns := make([]string, len(cts.ColumnNames))
+	for i := range cts.ColumnNames {
+		columns[i] = cts.ColumnNames[i] + " " + cts.ColumnTypes[i].Literal
 	}
 	return "CREATE TABLE " + cts.Name + " " + "(" + strings.Join(columns, ", ") + ")"
 }

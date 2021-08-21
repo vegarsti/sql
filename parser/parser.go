@@ -411,8 +411,9 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 
 func (p *Parser) parseCreateTableStatement() ast.Statement {
 	stmt := &ast.CreateTableStatement{
-		Token:   p.curToken,
-		Columns: make(map[string]token.Token),
+		Token:       p.curToken,
+		ColumnNames: make([]string, 0),
+		ColumnTypes: make([]token.Token, 0),
 	}
 
 	if !p.expectPeek(token.TABLE) {
@@ -439,6 +440,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 	}
 	p.nextToken()
 	columnLiteral := p.curToken.Literal
+	stmt.ColumnNames = append(stmt.ColumnNames, columnLiteral)
 
 	// assert next token is a column type
 	if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
@@ -446,7 +448,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		return nil
 	}
 	p.nextToken()
-	stmt.Columns[columnLiteral] = p.curToken
+	stmt.ColumnTypes = append(stmt.ColumnTypes, p.curToken)
 
 	for p.peekToken.Type == token.COMMA {
 		p.nextToken()
@@ -457,6 +459,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		}
 		p.nextToken()
 		columnLiteral := p.curToken.Literal
+		stmt.ColumnNames = append(stmt.ColumnNames, columnLiteral)
 
 		// assert next token is a column type
 		if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
@@ -464,7 +467,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 			return nil
 		}
 		p.nextToken()
-		stmt.Columns[columnLiteral] = p.curToken
+		stmt.ColumnTypes = append(stmt.ColumnTypes, p.curToken)
 	}
 
 	if !p.expectPeek(token.RPAREN) {
