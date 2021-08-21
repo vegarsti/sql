@@ -312,6 +312,7 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			from.Join = &ast.Join{
 				Table:     table,
 				Predicate: joinExpr,
+				JoinType:  ast.INNERJOIN,
 			}
 			p.nextToken()
 		}
