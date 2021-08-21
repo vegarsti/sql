@@ -344,6 +344,9 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 }
 
 func sortRows(rows []*object.Row) {
+	if len(rows) == 0 {
+		return
+	}
 	n := len(rows[0].SortByValues) // must be same length for all rows
 	sort.Slice(rows, func(i, j int) bool {
 		for k := 0; k < n; k++ {
