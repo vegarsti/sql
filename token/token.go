@@ -18,6 +18,7 @@ const (
 	IDENTIFIER          = "IDENTIFIER"
 	QUALIFIEDIDENTIFIER = "QUALIFIEDIDENTIFIER"
 	BOOL_LITERAL        = "BOOL_LITERAL"
+	NULL                = "NULL"
 
 	// Operators
 	PLUS                = "+"
