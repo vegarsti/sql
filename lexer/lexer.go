@@ -191,6 +191,9 @@ func (l *Lexer) NextToken() token.Token {
 			if strings.ToUpper(tok.Literal) == token.ON {
 				return token.Token{Type: token.ON, Literal: token.ON}
 			}
+			if strings.ToUpper(tok.Literal) == token.NULL {
+				return token.Token{Type: token.NULL, Literal: token.NULL}
+			}
 			for _, ch := range tok.Literal {
 				if isUppercase(byte(ch)) {
 					return token.Token{Type: token.ILLEGAL, Literal: tok.Literal}
