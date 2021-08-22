@@ -48,6 +48,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.STRING_LITERAL, p.parseStringLiteral)
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
 	p.registerPrefix(token.QUALIFIEDIDENTIFIER, p.parseQualifiedIdentifier)
+	p.registerPrefix(token.NULL, p.parseNull)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
@@ -186,6 +187,10 @@ func (p *Parser) parseQualifiedIdentifier() ast.Expression {
 		Table: split[0],
 	}
 	return lit
+}
+
+func (p *Parser) parseNull() ast.Expression {
+	return ast.NULL
 }
 
 func (p *Parser) parseStatement() ast.Statement {

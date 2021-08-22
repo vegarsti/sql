@@ -159,6 +159,16 @@ func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return "'" + sl.Token.Literal + "'" }
 
+type Null struct {
+	Token token.Token
+}
+
+func (n *Null) expressionNode()      {}
+func (n *Null) TokenLiteral() string { return n.Token.Literal }
+func (n *Null) String() string       { return "null" }
+
+var NULL = &Null{Token: token.Token{Type: token.NULL, Literal: "NULL"}}
+
 type Identifier struct {
 	Token token.Token
 	Value string
