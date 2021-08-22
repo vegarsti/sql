@@ -62,6 +62,8 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 		return &object.Float{Value: node.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
+	case *ast.Null:
+		return object.NULL
 	case *ast.Identifier:
 		if row.Values != nil && row.Aliases != nil {
 			for i := range row.Values {
@@ -129,6 +131,8 @@ func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 		return nil, nil
 	case *ast.Identifier:
 		return []*ast.Identifier{node}, nil
+	case *ast.Null:
+		return nil, nil
 	}
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }

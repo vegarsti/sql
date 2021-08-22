@@ -106,6 +106,41 @@ func TestEvalBooleanExpression(t *testing.T) {
 	}
 }
 
+func TestEvalNullExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected object.Object
+	}{
+		{"select null", object.NULL},
+	}
+	for _, tt := range tests {
+		evaluated := testEval(newTestBackend(), tt.input)
+		result, ok := evaluated.(*object.Result)
+		if !ok {
+			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
+				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+			}
+			t.Fatalf("object is not Result. got=%T", evaluated)
+		}
+		if len(result.Rows) != 1 {
+			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
+		}
+		row := result.Rows[0]
+		if len(row.Values) != 1 {
+			t.Fatalf("expected row to contain 1 element. got=%d", len(row.Values))
+		}
+		testNull(t, row.Values[0])
+	}
+}
+
+func testNull(t *testing.T, obj object.Object) bool {
+	if _, ok := obj.(*object.Null); !ok {
+		t.Errorf("object is not Null. got=%T (%+v)", obj, obj)
+		return false
+	}
+	return true
+}
+
 func testEval(backend *testBackend, input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)

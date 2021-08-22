@@ -15,6 +15,7 @@ const (
 	BOOLEAN_OBJ = "BOOLEAN"
 	FLOAT_OBJ   = "FLOAT"
 	STRING_OBJ  = "STRING"
+	NULL_OBJ    = "NULL"
 	ERROR_OBJ   = "ERROR"
 	OK_OBJ      = "OK"
 )
@@ -111,6 +112,17 @@ func (b *Boolean) SortValue() float64 {
 
 var True = Boolean{Value: true}
 var False = Boolean{Value: false}
+
+type Null struct {
+}
+
+func (b *Null) Inspect() string  { return "null" }
+func (b *Null) Type() ObjectType { return NULL_OBJ }
+func (b *Null) SortValue() float64 {
+	return 0
+}
+
+var NULL = &Null{}
 
 type Float struct {
 	Value float64
