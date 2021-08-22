@@ -44,6 +44,40 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	checkParserErrors(t, p)
 }
 
+func TestNull(t *testing.T) {
+	input := "select null"
+	l := lexer.New(input)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.SelectStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Expressions) != 1 {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	}
+
+	literal, ok := stmt.Expressions[0].(*ast.Null)
+	if !ok {
+		t.Fatalf("exp not *ast.Null. got=%T", stmt.Expressions[0])
+	}
+	expectedLiteral := "NULL"
+	if literal.TokenLiteral() != expectedLiteral {
+		t.Errorf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	}
+	checkParserErrors(t, p)
+}
+
 func TestBooleanLiteralExpression(t *testing.T) {
 	input := "select true, false"
 	l := lexer.New(input)
