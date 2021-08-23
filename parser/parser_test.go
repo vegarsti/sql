@@ -196,6 +196,43 @@ func TestParsingPrefixExpression(t *testing.T) {
 	}
 }
 
+func TestNullPrefixExpression(t *testing.T) {
+	prefixTest := []struct {
+		input    string
+		operator string
+	}{
+		{"select null is null", "IS NULL"},
+		{"select null is not null", "IS NOT NULL"},
+	}
+	for _, tt := range prefixTest {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.SelectStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+		}
+
+		if len(stmt.Expressions) != 1 {
+			t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+		}
+
+		exp, ok := stmt.Expressions[0].(*ast.PostfixExpression)
+		if !ok {
+			t.Fatalf("stmt is not ast.PostfixExpression. got=%T", stmt.Expressions[0])
+		}
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
+		}
+	}
+}
+
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	integ, ok := il.(*ast.IntegerLiteral)
 	if !ok {
