@@ -11,8 +11,9 @@ import (
 )
 
 type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression // the argument is the expression on the left side
+	prefixParseFn  func() ast.Expression
+	postfixParseFn func(ast.Expression) ast.Expression // the argument is the expression on the left side
+	infixParseFn   func(ast.Expression) ast.Expression // ditto
 )
 
 const (
@@ -31,8 +32,9 @@ type Parser struct {
 
 	errors []string
 
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
+	prefixParseFns  map[token.TokenType]prefixParseFn
+	postfixParseFns map[token.TokenType]postfixParseFn
+	infixParseFns   map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -52,6 +54,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
+
+	p.postfixParseFns = make(map[token.TokenType]postfixParseFn)
+	p.registerPostfix(token.IS, p.parseNullIsPostfixExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -81,6 +86,25 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	}
 	p.nextToken()
 	expression.Right = p.parseExpression(PREFIX)
+	return expression
+}
+
+func (p *Parser) parseNullIsPostfixExpression(left ast.Expression) ast.Expression {
+	op := "IS NULL"
+	p.nextToken()
+	if p.peekToken.Type == token.NOT {
+		op = "IS NOT NULL"
+		p.nextToken()
+	}
+	if !p.expectPeek(token.NULL) {
+		return nil
+	}
+	expression := &ast.PostfixExpression{
+		Token:    p.curToken,
+		Operator: op,
+		Left:     left,
+	}
+	p.nextToken()
 	return expression
 }
 
@@ -557,6 +581,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	leftExp := prefix()
 
 	for precedence < p.peekPrecedence() {
+		if postfix := p.postfixParseFns[p.peekToken.Type]; postfix != nil {
+			return postfix(leftExp)
+		}
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
 			return leftExp
@@ -599,6 +626,10 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
 
+func (p *Parser) registerPostfix(tokenType token.TokenType, fn postfixParseFn) {
+	p.postfixParseFns[tokenType] = fn
+}
+
 func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
@@ -621,6 +652,7 @@ var precedences = map[token.TokenType]int{
 	token.LESSTHANOREQUALS:    SUM,
 	token.GREATERTHAN:         SUM,
 	token.GREATERTHANOREQUALS: SUM,
+	token.IS:                  PRODUCT,
 }
 
 func (p *Parser) peekPrecedence() int {
