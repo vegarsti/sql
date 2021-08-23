@@ -51,6 +51,12 @@ func evalExpression(row object.Row, node ast.Expression) object.Object {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
+	case *ast.PostfixExpression:
+		left := evalExpression(row, node.Left)
+		if isError(left) {
+			return left
+		}
+		return evalPostfixExpression(left, node.Operator)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.BooleanLiteral:
@@ -127,12 +133,10 @@ func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 		identifiers = append(identifiers, left...)
 		identifiers = append(identifiers, right...)
 		return identifiers, nil
-	case *ast.IntegerLiteral, *ast.BooleanLiteral, *ast.FloatLiteral, *ast.StringLiteral:
+	case *ast.IntegerLiteral, *ast.BooleanLiteral, *ast.FloatLiteral, *ast.StringLiteral, *ast.PostfixExpression, *ast.Null:
 		return nil, nil
 	case *ast.Identifier:
 		return []*ast.Identifier{node}, nil
-	case *ast.Null:
-		return nil, nil
 	}
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
@@ -408,6 +412,27 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 		return evalBangPrefixOperatorExpression(right)
 	default:
 		return newError("unknown operator: %s%s", operator, right.Type())
+	}
+}
+
+func evalPostfixExpression(left object.Object, operator string) object.Object {
+	switch operator {
+	case "IS NULL":
+		switch left.(type) {
+		case *object.Null:
+			return &object.True
+		default:
+			return &object.False
+		}
+	case "IS NOT NULL":
+		switch left.(type) {
+		case *object.Null:
+			return &object.False
+		default:
+			return &object.True
+		}
+	default:
+		return newError("unknown operator: %s %s", left.Type(), operator)
 	}
 }
 
