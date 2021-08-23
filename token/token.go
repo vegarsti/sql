@@ -55,6 +55,8 @@ const (
 	WHERE  = "WHERE"
 	JOIN   = "JOIN"
 	ON     = "ON"
+	IS     = "IS"
+	NOT    = "NOT"
 
 	// Types
 	STRING_TYPE  = "STRING"
