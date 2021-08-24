@@ -155,11 +155,11 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			columns[c][from.Table] = true
 		}
 		if from.Join != nil {
-			for _, c := range backend.ColumnsInTable(from.Join.Table) {
+			for _, c := range backend.ColumnsInTable(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
 				}
-				columns[c][from.Join.Table] = true
+				columns[c][from.Join.With.Table] = true
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 					missingFrom = false
 				}
 				if from.Join != nil {
-					if id.Table == from.Join.Table {
+					if id.Table == from.Join.With.Table {
 						missingFrom = false
 					}
 				}
@@ -255,7 +255,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		rows = newRows
 		if from.Join != nil {
 			newRows = []object.Row{}
-			r, err = backend.Rows(from.Join.Table)
+			r, err = backend.Rows(from.Join.With.Table)
 			if err != nil {
 				return newError(err.Error())
 			}

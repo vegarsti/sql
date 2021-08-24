@@ -35,14 +35,15 @@ const (
 )
 
 type Join struct {
-	Table     string
+	With      *From
 	Predicate Expression
 	JoinType  JoinType
 }
 
 type From struct {
-	Table string
-	Join  *Join
+	Table      string
+	TableAlias string
+	Join       *Join
 }
 
 type SelectStatement struct {
