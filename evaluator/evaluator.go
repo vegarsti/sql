@@ -150,28 +150,28 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	tableToAlias := make(map[string]string)
 	tableReferences := make(map[string]int)
 	for _, from := range stmt.From {
-		tableReferences[from.Table]++
+		table := from.Table
+		if from.TableAlias != "" {
+			table = from.TableAlias
+			tableToAlias[from.Table] = from.TableAlias
+		}
+		tableReferences[table]++
 		for _, c := range backend.ColumnsInTable(from.Table) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
 			}
-			table := from.Table
-			if from.TableAlias != "" {
-				table = from.TableAlias
-				tableToAlias[from.Table] = from.TableAlias
-			}
 			columns[c][table] = true
 		}
 		if from.Join != nil {
-			tableReferences[from.Join.With.Table]++
+			table := from.Join.With.Table
+			if from.Join.With.TableAlias != "" {
+				table = from.Join.With.TableAlias
+				tableToAlias[from.TableAlias] = from.Table
+			}
+			tableReferences[table]++
 			for _, c := range backend.ColumnsInTable(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
-				}
-				table := from.Table
-				if from.Join.With.TableAlias != "" {
-					table = from.Join.With.TableAlias
-					tableToAlias[from.TableAlias] = from.Table
 				}
 				columns[c][table] = true
 			}
