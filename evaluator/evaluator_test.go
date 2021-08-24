@@ -655,6 +655,36 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a, a",
 		},
 		{
+			"select f.a, b.a from foo f join bar b on true",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+					},
+				},
+			},
+			"a, a",
+		},
+		{
 			"select b from foo order by b",
 			[]object.Row{
 				{
