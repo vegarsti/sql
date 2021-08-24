@@ -445,7 +445,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	switch operator {
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
-	case "!":
+	case "NOT":
 		return evalBangPrefixOperatorExpression(right)
 	default:
 		return newError("unknown operator: %s%s", operator, right.Type())

@@ -390,8 +390,8 @@ func TestParseBooleanPrefixExpression(t *testing.T) {
 		operator string
 		value    bool
 	}{
-		{"select !true", "!", true},
-		{"select !false", "!", false},
+		{"select not true", "NOT", true},
+		{"select not false", "NOT", false},
 	}
 	for _, tt := range prefixTest {
 		l := lexer.New(tt.input)

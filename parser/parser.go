@@ -53,7 +53,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.NULL, p.parseNull)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
-	p.registerPrefix(token.BANG, p.parsePrefixExpression)
+	p.registerPrefix(token.NOT, p.parsePrefixExpression)
 
 	p.postfixParseFns = make(map[token.TokenType]postfixParseFn)
 	p.registerPostfix(token.IS, p.parseNullIsPostfixExpression)

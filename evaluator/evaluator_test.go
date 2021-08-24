@@ -76,11 +76,11 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"select false", false},
 		{"select true = true", true},
 		{"select true != true", false},
-		{"select !true", false},
-		{"select !false", true},
+		{"select not true", false},
+		{"select not false", true},
 		{"select false and true", false},
 		{"select false or true", true},
-		{"select false or !true", false},
+		{"select false or not true", false},
 		{"select 1 < 1", false},
 		{"select 1 <= 1", true},
 		{"select 1 >= 1", true},
@@ -96,7 +96,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
 				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
 			}
-			t.Fatalf("object is not Result. got=%T", evaluated)
+			t.Fatalf("%s: object is not Result. got=%T", tt.input, evaluated)
 		}
 		if len(result.Rows) != 1 {
 			t.Fatalf("expected result to contain 1 row. got=%d", len(result.Rows))
