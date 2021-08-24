@@ -71,6 +71,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LESSTHANOREQUALS, p.parseInfixExpression)
 	p.registerInfix(token.GREATERTHAN, p.parseInfixExpression)
 	p.registerInfix(token.GREATERTHANOREQUALS, p.parseInfixExpression)
+	p.registerInfix(token.DOUBLEBAR, p.parseInfixExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -691,6 +692,7 @@ var precedences = map[token.TokenType]int{
 	token.GREATERTHAN:         SUM,
 	token.GREATERTHANOREQUALS: SUM,
 	token.IS:                  PRODUCT,
+	token.DOUBLEBAR:           SUM,
 }
 
 func (p *Parser) peekPrecedence() int {
