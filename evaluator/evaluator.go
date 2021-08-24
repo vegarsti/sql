@@ -220,9 +220,10 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 					missingFrom = false
 				}
 
-				// alias not provided
+				// alias is provided
 				if from.TableAlias != "" && id.Table == from.TableAlias {
 					missingFrom = false
+					id.Table = from.Table
 				}
 				if from.Join != nil {
 					// alias not provided
@@ -230,9 +231,10 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 						missingFrom = false
 					}
 
-					// alias not provided
+					// alias is provided
 					if from.Join.With.TableAlias != "" && id.Table == from.Join.With.TableAlias {
 						missingFrom = false
+						id.Table = from.Join.With.Table
 					}
 				}
 			}
