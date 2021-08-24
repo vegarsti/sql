@@ -77,6 +77,14 @@ func (l *Lexer) NextToken() token.Token {
 			return tok
 		}
 		tok = newToken(token.BANG, l.ch)
+	case '|':
+		if l.input[l.position+1] == '|' {
+			tok = token.Token{Type: token.DOUBLEBAR, Literal: "||"}
+			l.readChar()
+			l.readChar()
+			return tok
+		}
+		tok = newToken(token.ILLEGAL, l.ch)
 	case []byte("'")[0]:
 		tok := l.readString()
 		return tok

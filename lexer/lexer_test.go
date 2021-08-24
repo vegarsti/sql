@@ -10,7 +10,7 @@ import (
 func TestExpressionValue(t *testing.T) {
 	input := `
 1 + 2 * (30 / 5) - 1 + 3.14 + 'abc' 1.0 'def' select SELECT SeLeCT an_identifier , AS as aS As create table text float integer insert into values from identifier_with_underscore;
-order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int double char text varchar string Identifier join on null is not
+order by desc asc false true = != !2 and or limit offset where < <= > >= table_name.column_name bool boolean int double char text varchar string Identifier join on null is not ||
 `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -87,6 +87,7 @@ order by desc asc false true = != !2 and or limit offset where < <= > >= table_n
 		{token.NULL, "NULL"},
 		{token.IS, "IS"},
 		{token.NOT, "NOT"},
+		{token.DOUBLEBAR, "||"},
 	}
 	l := lexer.New(input)
 	for i, tt := range tests {

@@ -32,6 +32,7 @@ const (
 	LESSTHANOREQUALS    = "<="
 	GREATERTHAN         = ">"
 	GREATERTHANOREQUALS = ">="
+	DOUBLEBAR           = "||"
 
 	// Keywords
 	SELECT = "SELECT"

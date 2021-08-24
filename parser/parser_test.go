@@ -253,6 +253,26 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	return true
 }
 
+func testStringLiteral(t *testing.T, sl ast.Expression, value string) bool {
+	s, ok := sl.(*ast.StringLiteral)
+	if !ok {
+		t.Errorf("il not *ast.StringLiteral. got=%T", sl)
+		return false
+	}
+
+	if s.Value != value {
+		t.Errorf("s.Value not %s. got=%s", value, s.Value)
+		return false
+	}
+
+	if s.TokenLiteral() != value {
+		t.Errorf("s.TokenLiteral not %s. got=%s", value, s.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
 func testBooleanLiteral(t *testing.T, bl ast.Expression, value bool) bool {
 	b, ok := bl.(*ast.BooleanLiteral)
 	if !ok {
@@ -315,6 +335,50 @@ func TestParsingInfixExpressions(t *testing.T) {
 			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
 		}
 		if !testIntegerLiteral(t, exp.Right, tt.rightValue) {
+			return
+		}
+	}
+}
+
+func TestParseStringInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  string
+		operator   string
+		rightValue string
+	}{
+		{"select 'hello ' || 'world'", "hello ", "||", "world"},
+	}
+	for _, tt := range infixTests {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d", 1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.SelectStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
+		}
+
+		if len(stmt.Expressions) != 1 {
+			t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+		}
+
+		exp, ok := stmt.Expressions[0].(*ast.InfixExpression)
+		if !ok {
+			t.Fatalf("stmt is not ast.InfixExpression. got=%T", stmt.Expressions[0])
+		}
+		if !testStringLiteral(t, exp.Left, tt.leftValue) {
+			return
+		}
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
+		}
+		if !testStringLiteral(t, exp.Right, tt.rightValue) {
 			return
 		}
 	}
