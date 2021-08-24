@@ -148,7 +148,9 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 
 	columns := make(map[string]map[string]bool)
 	tableToAlias := make(map[string]string)
+	tableReferences := make(map[string]int)
 	for _, from := range stmt.From {
+		tableReferences[from.Table]++
 		for _, c := range backend.ColumnsInTable(from.Table) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
@@ -161,6 +163,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			columns[c][table] = true
 		}
 		if from.Join != nil {
+			tableReferences[from.Join.With.Table]++
 			for _, c := range backend.ColumnsInTable(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
@@ -172,6 +175,12 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 				}
 				columns[c][table] = true
 			}
+		}
+	}
+
+	for table, count := range tableReferences {
+		if count > 1 {
+			return newError(`table name "%s" specified more than once`, table)
 		}
 	}
 
