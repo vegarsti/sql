@@ -257,6 +257,7 @@ func TestSelectErrors(t *testing.T) {
 		{"select a from foo, bar", `column reference "a" is ambiguous`},
 		{"select a from foo order by d", `column "d" does not exist`},
 		{"select a from foo where 1", `argument of WHERE must be type boolean, not type integer: 1`},
+		{"select foo.a from foo f where 1", `invalid reference to FROM-clause entry for table "foo". Perhaps you meant to reference the table alias "f"`},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
