@@ -1190,7 +1190,7 @@ func TestParseMultipleStatementsError(t *testing.T) {
 }
 
 func TestSelectJoin(t *testing.T) {
-	input := "select a from foo join bar on foo.a = bar.b, baz join qux on x = y"
+	input := "select a from foo f join bar b on f.a = b.b, baz join qux on x = y"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -1232,12 +1232,21 @@ func TestSelectJoin(t *testing.T) {
 	if stmt.From[0].Table != expectedFrom1 {
 		t.Fatalf("stmt.From[0].Table not %s. got=%s", expectedFrom1, stmt.From[0].Table)
 	}
+	expectedFromAlias1 := "f"
+	if stmt.From[0].TableAlias != expectedFromAlias1 {
+		t.Fatalf("stmt.From[0].TableAlias not %s. got=%s", expectedFromAlias1, stmt.From[0].TableAlias)
+	}
+
 	if stmt.From[0].Join == nil {
 		t.Fatalf("stmt.From[0].Join is nil")
 	}
 	expectedJoinTable1 := "bar"
 	if stmt.From[0].Join.With.Table != expectedJoinTable1 {
-		t.Fatalf("stmt.From[0].Join.Table is not %s. got=%s", expectedJoinTable1, stmt.From[0].Join.With.Table)
+		t.Fatalf("stmt.From[0].Join.With.Table is not %s. got=%s", expectedJoinTable1, stmt.From[0].Join.With.Table)
+	}
+	expectedJoinAlias1 := "b"
+	if stmt.From[0].Join.With.TableAlias != expectedJoinAlias1 {
+		t.Fatalf("stmt.From[0].Join.With.TableAlias not %s. got=%s", expectedJoinAlias1, stmt.From[0].Join.With.TableAlias)
 	}
 	expectedJoinPred1 := "(a = b)"
 	if stmt.From[0].Join.Predicate.String() != expectedJoinPred1 {
