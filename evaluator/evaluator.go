@@ -147,19 +147,30 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	// 3) For each row, evaluate expression
 
 	columns := make(map[string]map[string]bool)
+	tableToAlias := make(map[string]string)
 	for _, from := range stmt.From {
 		for _, c := range backend.ColumnsInTable(from.Table) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
 			}
-			columns[c][from.Table] = true
+			table := from.Table
+			if from.TableAlias != "" {
+				table = from.TableAlias
+				tableToAlias[from.Table] = from.TableAlias
+			}
+			columns[c][table] = true
 		}
 		if from.Join != nil {
 			for _, c := range backend.ColumnsInTable(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
 				}
-				columns[c][from.Join.With.Table] = true
+				table := from.Table
+				if from.Join.With.TableAlias != "" {
+					table = from.Join.With.TableAlias
+					tableToAlias[from.TableAlias] = from.Table
+				}
+				columns[c][table] = true
 			}
 		}
 	}
@@ -204,14 +215,29 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		if id.Table != "" {
 			missingFrom := true
 			for _, from := range stmt.From {
-				if id.Table == from.Table {
+				// alias not provided
+				if from.TableAlias == "" && id.Table == from.Table {
+					missingFrom = false
+				}
+
+				// alias not provided
+				if from.TableAlias != "" && id.Table == from.TableAlias {
 					missingFrom = false
 				}
 				if from.Join != nil {
-					if id.Table == from.Join.With.Table {
+					// alias not provided
+					if from.Join.With.TableAlias == "" && id.Table == from.Join.With.Table {
+						missingFrom = false
+					}
+
+					// alias not provided
+					if from.Join.With.TableAlias != "" && id.Table == from.Join.With.TableAlias {
 						missingFrom = false
 					}
 				}
+			}
+			if alias, ok := tableToAlias[id.Table]; missingFrom && ok {
+				return newError(`invalid reference to FROM-clause entry for table "%s". Perhaps you meant to reference the table alias "%s"`, id.Table, alias)
 			}
 			if missingFrom {
 				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
