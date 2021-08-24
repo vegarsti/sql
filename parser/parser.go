@@ -293,6 +293,12 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		from := &ast.From{Table: p.curToken.Literal}
 		p.nextToken()
 
+		// table alias
+		if p.curToken.Type == token.IDENTIFIER {
+			from.TableAlias = p.curToken.Literal
+			p.nextToken()
+		}
+
 		if p.curToken.Type == token.JOIN {
 			p.nextToken()
 			// assert next token is a table name
@@ -306,11 +312,20 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			}
 			p.nextToken()
 			joinExpr := p.parseExpression(LOWEST)
+			joinWith := &ast.From{
+				Table: table,
+			}
 			from.Join = &ast.Join{
-				Table:     table,
+				With:      joinWith,
 				Predicate: joinExpr,
+				JoinType:  ast.INNERJOIN,
 			}
 			p.nextToken()
+			// table alias
+			if p.curToken.Type == token.IDENTIFIER {
+				from.Join.With.TableAlias = p.curToken.Literal
+				p.nextToken()
+			}
 		}
 		stmt.From = append(stmt.From, from)
 	}
@@ -324,6 +339,11 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		}
 		from := &ast.From{Table: p.curToken.Literal}
 		p.nextToken()
+		// table alias
+		if p.curToken.Type == token.IDENTIFIER {
+			from.TableAlias = p.curToken.Literal
+			p.nextToken()
+		}
 
 		if p.curToken.Type == token.JOIN {
 			p.nextToken()
@@ -338,12 +358,20 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 			}
 			p.nextToken()
 			joinExpr := p.parseExpression(LOWEST)
+			joinWith := &ast.From{
+				Table: table,
+			}
 			from.Join = &ast.Join{
-				Table:     table,
+				With:      joinWith,
 				Predicate: joinExpr,
 				JoinType:  ast.INNERJOIN,
 			}
 			p.nextToken()
+			// table alias
+			if p.curToken.Type == token.IDENTIFIER {
+				from.Join.With.TableAlias = p.curToken.Literal
+				p.nextToken()
+			}
 		}
 		stmt.From = append(stmt.From, from)
 	}
