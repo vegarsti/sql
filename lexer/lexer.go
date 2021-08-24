@@ -111,40 +111,22 @@ func (l *Lexer) NextToken() token.Token {
 			}
 
 			// string type
-			if strings.ToUpper(tok.Literal) == token.STRING_TYPE {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "CHAR" {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "TEXT" {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "VARCHAR" {
+			if map[string]bool{token.STRING_TYPE: true, "CHAR": true, "TEXT": true, "VARCHAR": true}[strings.ToUpper(tok.Literal)] {
 				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
 			}
 
 			// float type
-			if strings.ToUpper(tok.Literal) == token.FLOAT_TYPE {
-				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "DOUBLE" {
+			if map[string]bool{token.FLOAT_TYPE: true, "DOUBLE": true}[strings.ToUpper(tok.Literal)] {
 				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
 			}
 
 			// int type
-			if strings.ToUpper(tok.Literal) == token.INTEGER_TYPE {
-				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "INT" {
+			if map[string]bool{token.INTEGER_TYPE: true, "INT": true}[strings.ToUpper(tok.Literal)] {
 				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
 
 			// bool type
-			if strings.ToUpper(tok.Literal) == token.BOOLEAN_TYPE {
-				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "BOOL" {
+			if map[string]bool{token.BOOLEAN_TYPE: true, "BOOL": true}[strings.ToUpper(tok.Literal)] {
 				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
 			}
 
