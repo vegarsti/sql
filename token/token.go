@@ -26,7 +26,6 @@ const (
 	ASTERISK            = "*"
 	SLASH               = "/"
 	EQUALS              = "="
-	BANG                = "!"
 	NOTEQUALS           = "!="
 	LESSTHAN            = "<"
 	LESSTHANOREQUALS    = "<="
