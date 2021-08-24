@@ -1190,7 +1190,7 @@ func TestParseMultipleStatementsError(t *testing.T) {
 }
 
 func TestSelectJoin(t *testing.T) {
-	input := "select a from foo f join bar b on f.a = b.b, baz join qux on x = y"
+	input := "select f.a, z.x + q.y from foo f join bar b on f.a = b.b, baz z join qux q on x = y"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -1210,17 +1210,27 @@ func TestSelectJoin(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not ast.SelectStatement. got=%T", program.Statements[0])
 	}
 
-	if len(stmt.Expressions) != 1 {
-		t.Fatalf("stmt does not contain %d expressions. got=%d", 1, len(stmt.Expressions))
+	expectedLen := 2
+	if len(stmt.Expressions) != expectedLen {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", expectedLen, len(stmt.Expressions))
 	}
 
-	literal, ok := stmt.Expressions[0].(*ast.Identifier)
+	literal1, ok := stmt.Expressions[0].(*ast.Identifier)
 	if !ok {
 		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[0])
 	}
-	expectedLiteral := "a"
-	if literal.TokenLiteral() != expectedLiteral {
-		t.Fatalf("literal.TokenLiteral not %s. got=%s", expectedLiteral, literal.TokenLiteral())
+	expectedLiteral1 := "f.a"
+	if literal1.TokenLiteral() != expectedLiteral1 {
+		t.Fatalf("literal.TokenLiteral not %s. got=%s", expectedLiteral1, literal1.TokenLiteral())
+	}
+
+	literal2, ok := stmt.Expressions[1].(*ast.InfixExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", stmt.Expressions[1])
+	}
+	expectedLiteral2 := "(x + y)"
+	if literal2.String() != expectedLiteral2 {
+		t.Fatalf("literal.String() not %s. got=%s", expectedLiteral2, literal2.String())
 	}
 
 	expectedFromLength := 2

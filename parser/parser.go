@@ -357,15 +357,20 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 				p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
 				return nil
 			}
-			table := p.curToken.Literal
+			joinWith := &ast.From{
+				Table: p.curToken.Literal,
+			}
+			// table alias
+			if p.peekToken.Type == token.IDENTIFIER {
+				joinWith.TableAlias = p.peekToken.Literal
+				p.nextToken()
+			}
 			if !p.expectPeek(token.ON) {
 				return nil
 			}
 			p.nextToken()
 			joinExpr := p.parseExpression(LOWEST)
-			joinWith := &ast.From{
-				Table: table,
-			}
+
 			from.Join = &ast.Join{
 				With:      joinWith,
 				Predicate: joinExpr,
