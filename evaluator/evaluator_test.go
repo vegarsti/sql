@@ -216,6 +216,7 @@ func TestEvalStringExpression(t *testing.T) {
 		{"select 'def'", "def"},
 		{`select 'a string with spaces and "quotes"'`, `a string with spaces and "quotes"`},
 		{"select '🤩'", "🤩"},
+		{"select 'hello' || 'world'", "helloworld"},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
