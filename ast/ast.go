@@ -47,7 +47,6 @@ type From struct {
 }
 
 type SelectStatement struct {
-	Token       token.Token // the SELECT token
 	Expressions []Expression
 	Aliases     []string // SELECT value AS some_alias
 	From        []*From
@@ -58,7 +57,7 @@ type SelectStatement struct {
 }
 
 func (es *SelectStatement) statementNode()       {}
-func (es *SelectStatement) TokenLiteral() string { return es.Token.Literal }
+func (es *SelectStatement) TokenLiteral() string { return "SELECT" }
 func (es *SelectStatement) String() string {
 	if len(es.Expressions) == 0 {
 		return ""
@@ -71,14 +70,13 @@ func (es *SelectStatement) String() string {
 }
 
 type CreateTableStatement struct {
-	Token       token.Token // the CREATE token
 	Name        string
 	ColumnNames []string
 	ColumnTypes []token.Token
 }
 
 func (cts *CreateTableStatement) statementNode()       {}
-func (cts *CreateTableStatement) TokenLiteral() string { return cts.Token.Literal }
+func (cts *CreateTableStatement) TokenLiteral() string { return "CREATE TABLE" }
 func (cts *CreateTableStatement) String() string {
 	columns := make([]string, len(cts.ColumnNames))
 	for i := range cts.ColumnNames {
@@ -88,13 +86,12 @@ func (cts *CreateTableStatement) String() string {
 }
 
 type InsertStatement struct {
-	Token       token.Token // the INSERT token
 	TableName   string
 	Expressions []Expression
 }
 
 func (is *InsertStatement) statementNode()       {}
-func (is *InsertStatement) TokenLiteral() string { return is.Token.Literal }
+func (is *InsertStatement) TokenLiteral() string { return "INSERT" }
 func (is *InsertStatement) String() string {
 	expressions := make([]string, len(is.Expressions))
 	for i, e := range is.Expressions {
@@ -116,11 +113,9 @@ func (p *Program) TokenLiteral() string {
 
 func (p *Program) String() string {
 	var out bytes.Buffer
-
 	for _, s := range p.Statements {
 		out.WriteString(s.String())
 	}
-
 	return out.String()
 }
 
@@ -181,7 +176,7 @@ func (il *Identifier) TokenLiteral() string { return il.Token.Literal }
 func (il *Identifier) String() string       { return il.Value }
 
 type PrefixExpression struct {
-	Token    token.Token // The prefix token, e.g. -
+	Token    token.Token
 	Operator string
 	Right    Expression
 }
@@ -190,17 +185,15 @@ func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
-
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
 	out.WriteString(")")
-
 	return out.String()
 }
 
 type PostfixExpression struct {
-	Token    token.Token // The postfix token
+	Token    token.Token
 	Operator string
 	Left     Expression
 }
@@ -209,18 +202,16 @@ func (pe *PostfixExpression) expressionNode()      {}
 func (pe *PostfixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PostfixExpression) String() string {
 	var out bytes.Buffer
-
 	out.WriteString("(")
 	out.WriteString(pe.Left.String())
 	out.WriteString(" ")
 	out.WriteString(pe.Operator)
 	out.WriteString(")")
-
 	return out.String()
 }
 
 type InfixExpression struct {
-	Token    token.Token // The infix token, e.g. !
+	Token    token.Token
 	Left     Expression
 	Operator string
 	Right    Expression
@@ -230,12 +221,10 @@ func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *InfixExpression) String() string {
 	var out bytes.Buffer
-
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
 	out.WriteString(" " + ie.Operator + " ")
 	out.WriteString(ie.Right.String())
 	out.WriteString(")")
-
 	return out.String()
 }

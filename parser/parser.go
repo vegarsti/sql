@@ -235,7 +235,6 @@ func (p *Parser) parseStatement() ast.Statement {
 
 func (p *Parser) parseSelectStatement() ast.Statement {
 	stmt := &ast.SelectStatement{
-		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
 		From:        make([]*ast.From, 0),
@@ -480,7 +479,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 
 func (p *Parser) parseCreateTableStatement() ast.Statement {
 	stmt := &ast.CreateTableStatement{
-		Token:       p.curToken,
 		ColumnNames: make([]string, 0),
 		ColumnTypes: make([]token.Token, 0),
 	}
@@ -555,7 +553,6 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 
 func (p *Parser) parseInsertStatement() ast.Statement {
 	stmt := &ast.InsertStatement{
-		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 	}
 
