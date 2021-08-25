@@ -13,6 +13,35 @@ type Lexer struct {
 	ch           byte // current char under examination
 }
 
+var keywords = []token.TokenType{
+	token.SELECT,
+	token.AS,
+	token.CREATE,
+	token.TABLE,
+	token.INSERT,
+	token.INTO,
+	token.VALUES,
+	token.FROM,
+	token.ORDER,
+	token.BY,
+	token.DESC,
+	token.ASC,
+	token.TRUE,
+	token.FALSE,
+	token.AND,
+	token.OR,
+	token.LIMIT,
+	token.OFFSET,
+	token.WHERE,
+	token.JOIN,
+	token.ON,
+	token.NULL,
+	token.IS,
+	token.NOT,
+	token.TRUE,
+	token.FALSE,
+}
+
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
@@ -97,117 +126,33 @@ func (l *Lexer) NextToken() token.Token {
 		}
 		if isLetter(l.ch) {
 			tok = l.readIdentifier()
-			if strings.ToUpper(tok.Literal) == token.SELECT {
-				return token.Token{Type: token.SELECT, Literal: token.SELECT}
-			}
-			if strings.ToUpper(tok.Literal) == token.AS {
-				return token.Token{Type: token.AS, Literal: token.AS}
-			}
-			if strings.ToUpper(tok.Literal) == token.CREATE {
-				return token.Token{Type: token.CREATE, Literal: token.CREATE}
-			}
-			if strings.ToUpper(tok.Literal) == token.TABLE {
-				return token.Token{Type: token.TABLE, Literal: token.TABLE}
-			}
-
+			literal := strings.ToUpper(tok.Literal)
 			// string type
-			if strings.ToUpper(tok.Literal) == token.STRING_TYPE {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "CHAR" {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "TEXT" {
-				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "VARCHAR" {
+			if map[string]bool{token.STRING_TYPE: true, "CHAR": true, "TEXT": true, "VARCHAR": true}[literal] {
 				return token.Token{Type: token.STRING_TYPE, Literal: token.STRING_TYPE}
 			}
 
 			// float type
-			if strings.ToUpper(tok.Literal) == token.FLOAT_TYPE {
-				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "DOUBLE" {
+			if map[string]bool{token.FLOAT_TYPE: true, "DOUBLE": true}[literal] {
 				return token.Token{Type: token.FLOAT_TYPE, Literal: token.FLOAT_TYPE}
 			}
 
 			// int type
-			if strings.ToUpper(tok.Literal) == token.INTEGER_TYPE {
-				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "INT" {
+			if map[string]bool{token.INTEGER_TYPE: true, "INT": true}[literal] {
 				return token.Token{Type: token.INTEGER_TYPE, Literal: token.INTEGER_TYPE}
 			}
 
 			// bool type
-			if strings.ToUpper(tok.Literal) == token.BOOLEAN_TYPE {
-				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
-			}
-			if strings.ToUpper(tok.Literal) == "BOOL" {
+			if map[string]bool{token.BOOLEAN_TYPE: true, "BOOL": true}[literal] {
 				return token.Token{Type: token.BOOLEAN_TYPE, Literal: token.BOOLEAN_TYPE}
 			}
 
-			if strings.ToUpper(tok.Literal) == token.INSERT {
-				return token.Token{Type: token.INSERT, Literal: token.INSERT}
+			for _, keyword := range keywords {
+				if literal == string(keyword) {
+					return token.Token{Type: keyword, Literal: literal}
+				}
 			}
-			if strings.ToUpper(tok.Literal) == token.INTO {
-				return token.Token{Type: token.INTO, Literal: token.INTO}
-			}
-			if strings.ToUpper(tok.Literal) == token.VALUES {
-				return token.Token{Type: token.VALUES, Literal: token.VALUES}
-			}
-			if strings.ToUpper(tok.Literal) == token.FROM {
-				return token.Token{Type: token.FROM, Literal: token.FROM}
-			}
-			if strings.ToUpper(tok.Literal) == token.ORDER {
-				return token.Token{Type: token.ORDER, Literal: token.ORDER}
-			}
-			if strings.ToUpper(tok.Literal) == token.BY {
-				return token.Token{Type: token.BY, Literal: token.BY}
-			}
-			if strings.ToUpper(tok.Literal) == token.DESC {
-				return token.Token{Type: token.DESC, Literal: token.DESC}
-			}
-			if strings.ToUpper(tok.Literal) == token.ASC {
-				return token.Token{Type: token.ASC, Literal: token.ASC}
-			}
-			if strings.ToUpper(tok.Literal) == token.TRUE {
-				return token.Token{Type: token.BOOL_LITERAL, Literal: token.TRUE}
-			}
-			if strings.ToUpper(tok.Literal) == token.FALSE {
-				return token.Token{Type: token.BOOL_LITERAL, Literal: token.FALSE}
-			}
-			if strings.ToUpper(tok.Literal) == token.AND {
-				return token.Token{Type: token.AND, Literal: token.AND}
-			}
-			if strings.ToUpper(tok.Literal) == token.OR {
-				return token.Token{Type: token.OR, Literal: token.OR}
-			}
-			if strings.ToUpper(tok.Literal) == token.LIMIT {
-				return token.Token{Type: token.LIMIT, Literal: token.LIMIT}
-			}
-			if strings.ToUpper(tok.Literal) == token.OFFSET {
-				return token.Token{Type: token.OFFSET, Literal: token.OFFSET}
-			}
-			if strings.ToUpper(tok.Literal) == token.WHERE {
-				return token.Token{Type: token.WHERE, Literal: token.WHERE}
-			}
-			if strings.ToUpper(tok.Literal) == token.JOIN {
-				return token.Token{Type: token.JOIN, Literal: token.JOIN}
-			}
-			if strings.ToUpper(tok.Literal) == token.ON {
-				return token.Token{Type: token.ON, Literal: token.ON}
-			}
-			if strings.ToUpper(tok.Literal) == token.NULL {
-				return token.Token{Type: token.NULL, Literal: token.NULL}
-			}
-			if strings.ToUpper(tok.Literal) == token.IS {
-				return token.Token{Type: token.IS, Literal: token.IS}
-			}
-			if strings.ToUpper(tok.Literal) == token.NOT {
-				return token.Token{Type: token.NOT, Literal: token.NOT}
-			}
+			// don't allow uppercase identifiers
 			for _, ch := range tok.Literal {
 				if isUppercase(byte(ch)) {
 					return token.Token{Type: token.ILLEGAL, Literal: tok.Literal}

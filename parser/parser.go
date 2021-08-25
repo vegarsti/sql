@@ -45,7 +45,8 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.INT_LITERAL, p.parseIntegerLiteral)
-	p.registerPrefix(token.BOOL_LITERAL, p.parseBooleanLiteral)
+	p.registerPrefix(token.TRUE, p.parseBooleanLiteral)
+	p.registerPrefix(token.FALSE, p.parseBooleanLiteral)
 	p.registerPrefix(token.FLOAT_LITERAL, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING_LITERAL, p.parseStringLiteral)
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
@@ -149,16 +150,13 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
-
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
 		p.errors = append(p.errors, msg)
 		return nil
 	}
-
 	lit.Value = value
-
 	return lit
 }
 
@@ -232,9 +230,128 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
+func (p *Parser) parseElementInSelect() (ast.Expression, string) {
+	expr := p.parseExpression(LOWEST)
+	// check for AS
+	if p.peekToken.Type == token.AS {
+		p.nextToken()
+		if !p.expectPeek(token.IDENTIFIER) {
+			return nil, ""
+		}
+		alias := p.curToken.Literal
+		return expr, alias
+	}
+	return expr, ""
+}
+
+func (p *Parser) parseFrom() *ast.From {
+	if !p.expectPeek(token.IDENTIFIER) {
+		return nil
+	}
+	from := &ast.From{Table: p.curToken.Literal}
+
+	// table alias
+	if p.peekToken.Type == token.IDENTIFIER {
+		from.TableAlias = p.peekToken.Literal
+		p.nextToken()
+	}
+
+	if p.peekToken.Type == token.JOIN {
+		p.nextToken()
+		if !p.expectPeek(token.IDENTIFIER) {
+			return nil
+		}
+		joinWith := &ast.From{
+			Table: p.curToken.Literal,
+		}
+		// table alias
+		if p.peekToken.Type == token.IDENTIFIER {
+			joinWith.TableAlias = p.peekToken.Literal
+			p.nextToken()
+		}
+		if !p.expectPeek(token.ON) {
+			return nil
+		}
+		p.nextToken()
+		joinExpr := p.parseExpression(LOWEST)
+		from.Join = &ast.Join{
+			With:      joinWith,
+			Predicate: joinExpr,
+			JoinType:  ast.INNERJOIN,
+		}
+		// table alias
+		if p.peekToken.Type == token.IDENTIFIER {
+			from.Join.With.TableAlias = p.peekToken.Literal
+			p.nextToken()
+		}
+	}
+	return from
+}
+
+func (p *Parser) parseOrderBy() *ast.OrderByExpression {
+	// The sort expression(s) can be any expression that would be valid in the query's select list. An example is:
+	sortExpr := p.parseExpression(LOWEST)
+	if sortExpr == nil {
+		return nil
+	}
+	orderBy := &ast.OrderByExpression{Expression: sortExpr}
+	if p.peekToken.Type == token.DESC {
+		orderBy.Descending = true
+		p.nextToken()
+	} else if p.peekToken.Type == token.ASC {
+		p.nextToken()
+	}
+	return orderBy
+}
+
+func (p *Parser) parseLimit() *int {
+	if !p.expectPeek(token.INT_LITERAL) {
+		return nil
+	}
+	n, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	if n < 0 {
+		p.errors = append(p.errors, fmt.Sprintf("limit must be non-negative, got %d", n))
+		return nil
+	}
+	x := int(n)
+	return &x
+}
+
+func (p *Parser) parseOffset() *int {
+	if !p.expectPeek(token.INT_LITERAL) {
+		return nil
+	}
+	n, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	if n < 0 {
+		p.errors = append(p.errors, fmt.Sprintf("offset must be non-negative, got %d", n))
+		return nil
+	}
+	x := int(n)
+	return &x
+}
+
+func (p *Parser) expectPeekIsEndOfStatement() bool {
+	if !(p.peekToken.Type == token.SEMICOLON || p.peekToken.Type == token.EOF) {
+		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
+		p.errors = append(p.errors, msg)
+		return false
+	}
+	p.nextToken()
+	return true
+}
+
 func (p *Parser) parseSelectStatement() ast.Statement {
 	stmt := &ast.SelectStatement{
-		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 		Aliases:     make([]string, 0),
 		From:        make([]*ast.From, 0),
@@ -243,243 +360,106 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Where:       nil,
 	}
 	p.nextToken() // read SELECT token
-	stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
-	p.nextToken()
+	expression, alias := p.parseElementInSelect()
+	if expression == nil {
+		return nil
+	}
+	stmt.Expressions = append(stmt.Expressions, expression)
+	stmt.Aliases = append(stmt.Aliases, alias)
 
-	// check for AS
-	if p.curToken.Type == token.AS {
-		p.nextToken() // read AS
-
-		// assert next token is an identifier
-		if p.curToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+	for p.peekToken.Type == token.COMMA {
+		p.nextToken()
+		p.nextToken()
+		expression, alias := p.parseElementInSelect()
+		if expression == nil {
 			return nil
 		}
-		stmt.Aliases = append(stmt.Aliases, p.curToken.Literal)
-
-		p.nextToken()
-	} else {
-		stmt.Aliases = append(stmt.Aliases, "")
+		stmt.Expressions = append(stmt.Expressions, expression)
+		stmt.Aliases = append(stmt.Aliases, alias)
 	}
 
-	for p.curToken.Type == token.COMMA {
-		p.nextToken() // read comma
-		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST))
-		p.nextToken() // advance to next token
-
-		// check for AS
-		if p.curToken.Type != token.AS {
-			stmt.Aliases = append(stmt.Aliases, "")
-			continue
-		}
-		p.nextToken() // read AS
-
-		// assert next token is an identifier
-		if p.curToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
-			return nil
-		}
-		stmt.Aliases = append(stmt.Aliases, p.curToken.Literal)
-
-		p.nextToken() // advance to next token
-	}
-
-	if p.curToken.Type == token.FROM {
+	if p.peekToken.Type == token.FROM {
 		p.nextToken()
-		// assert next token is an identifier
-		if p.curToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
+		from := p.parseFrom()
+		if from == nil {
 			return nil
-		}
-		from := &ast.From{Table: p.curToken.Literal}
-		p.nextToken()
-
-		// table alias
-		if p.curToken.Type == token.IDENTIFIER {
-			from.TableAlias = p.curToken.Literal
-			p.nextToken()
-		}
-
-		if p.curToken.Type == token.JOIN {
-			p.nextToken()
-			// assert next token is a table name
-			if p.curToken.Type != token.IDENTIFIER {
-				p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
-				return nil
-			}
-			joinWith := &ast.From{
-				Table: p.curToken.Literal,
-			}
-			// table alias
-			if p.peekToken.Type == token.IDENTIFIER {
-				joinWith.TableAlias = p.peekToken.Literal
-				p.nextToken()
-			}
-
-			if !p.expectPeek(token.ON) {
-				return nil
-			}
-			p.nextToken()
-			joinExpr := p.parseExpression(LOWEST)
-			from.Join = &ast.Join{
-				With:      joinWith,
-				Predicate: joinExpr,
-				JoinType:  ast.INNERJOIN,
-			}
-			p.nextToken()
-			// table alias
-			if p.curToken.Type == token.IDENTIFIER {
-				from.Join.With.TableAlias = p.curToken.Literal
-				p.nextToken()
-			}
 		}
 		stmt.From = append(stmt.From, from)
 	}
 
-	for p.curToken.Type == token.COMMA {
-		p.nextToken() // read comma
-		// assert next token is an identifier
-		if p.curToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected table identifier, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
-			return nil
-		}
-		from := &ast.From{Table: p.curToken.Literal}
+	for p.peekToken.Type == token.COMMA {
 		p.nextToken()
-		// table alias
-		if p.curToken.Type == token.IDENTIFIER {
-			from.TableAlias = p.curToken.Literal
-			p.nextToken()
-		}
-
-		if p.curToken.Type == token.JOIN {
-			p.nextToken()
-			// assert next token is a table name
-			if p.curToken.Type != token.IDENTIFIER {
-				p.errors = append(p.errors, fmt.Sprintf("expected identifier for table to join, got %s token with literal %s", p.curToken.Type, p.curToken.Literal))
-				return nil
-			}
-			joinWith := &ast.From{
-				Table: p.curToken.Literal,
-			}
-			// table alias
-			if p.peekToken.Type == token.IDENTIFIER {
-				joinWith.TableAlias = p.peekToken.Literal
-				p.nextToken()
-			}
-			if !p.expectPeek(token.ON) {
-				return nil
-			}
-			p.nextToken()
-			joinExpr := p.parseExpression(LOWEST)
-
-			from.Join = &ast.Join{
-				With:      joinWith,
-				Predicate: joinExpr,
-				JoinType:  ast.INNERJOIN,
-			}
-			p.nextToken()
-			// table alias
-			if p.curToken.Type == token.IDENTIFIER {
-				from.Join.With.TableAlias = p.curToken.Literal
-				p.nextToken()
-			}
+		from := p.parseFrom()
+		if from == nil {
+			return nil
 		}
 		stmt.From = append(stmt.From, from)
 	}
 
-	if p.curToken.Type == token.WHERE {
+	if p.peekToken.Type == token.WHERE {
+		p.nextToken()
 		p.nextToken()
 		stmt.Where = p.parseExpression(LOWEST)
-		p.nextToken()
 	}
 
-	if p.curToken.Type == token.ORDER {
+	if p.peekToken.Type == token.ORDER {
+		p.nextToken()
 		if !p.expectPeek(token.BY) {
 			return nil
 		}
 		p.nextToken()
-		// The sort expression(s) can be any expression that would be valid in the query's select list. An example is:
-		sortExpr := p.parseExpression(LOWEST)
-		if sortExpr == nil {
+		orderBy := p.parseOrderBy()
+		if orderBy == nil {
 			return nil
 		}
-		orderBy := &ast.OrderByExpression{Expression: sortExpr}
-		p.nextToken()
-		if p.curToken.Type == token.DESC {
-			orderBy.Descending = true
-			p.nextToken()
-		} else if p.curToken.Type == token.ASC {
-			p.nextToken()
-		}
 		stmt.OrderBy = append(stmt.OrderBy, orderBy)
-		for p.curToken.Type == token.COMMA {
-			p.nextToken() // read comma
-			sortExpr = p.parseExpression(LOWEST)
-			if sortExpr == nil {
-				return nil
-			}
-			orderBy := &ast.OrderByExpression{Expression: sortExpr}
+		for p.peekToken.Type == token.COMMA {
 			p.nextToken()
-			if p.curToken.Type == token.DESC {
-				orderBy.Descending = true
-				p.nextToken()
-			} else if p.curToken.Type == token.ASC {
-				p.nextToken()
+			p.nextToken()
+			orderBy := p.parseOrderBy()
+			if orderBy == nil {
+				return nil
 			}
 			stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		}
 	}
 
-	if p.curToken.Type == token.LIMIT {
-		if !p.expectPeek(token.INT_LITERAL) {
-			return nil
-		}
-		limit := p.parseIntegerLiteral()
-		n, ok := limit.(*ast.IntegerLiteral)
-		if !ok {
-			p.errors = append(p.errors, fmt.Sprintf("expected integer in limit, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
-			return nil
-		}
-		if n.Value < 0 {
-			p.errors = append(p.errors, fmt.Sprintf("limit must be non-negative, got %d", n.Value))
-			return nil
-		}
-		x := int(n.Value)
-		stmt.Limit = &x
+	if p.peekToken.Type == token.LIMIT {
 		p.nextToken()
+		limit := p.parseLimit()
+		if limit == nil {
+			return nil
+		}
+		stmt.Limit = limit
 	}
 
-	if p.curToken.Type == token.OFFSET {
-		if !p.expectPeek(token.INT_LITERAL) {
-			return nil
-		}
-		limit := p.parseIntegerLiteral()
-		n, ok := limit.(*ast.IntegerLiteral)
-		if !ok {
-			p.errors = append(p.errors, fmt.Sprintf("expected integer in offset, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
-			return nil
-		}
-		if n.Value < 0 {
-			p.errors = append(p.errors, fmt.Sprintf("limit must be non-negative, got %d", n.Value))
-			return nil
-		}
-		x := int(n.Value)
-		stmt.Offset = &x
+	if p.peekToken.Type == token.OFFSET {
 		p.nextToken()
+		offset := p.parseOffset()
+		if offset == nil {
+			return nil
+		}
+		stmt.Offset = offset
 	}
 
-	if !(p.curToken.Type == token.SEMICOLON || p.curToken.Type == token.EOF) {
-		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.curToken.Type, p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+	if !p.expectPeekIsEndOfStatement() {
 		return nil
 	}
 
 	return stmt
 }
 
+func (p *Parser) expectPeekType() bool {
+	if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
+		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		return false
+	}
+	p.nextToken()
+	return true
+}
+
 func (p *Parser) parseCreateTableStatement() ast.Statement {
 	stmt := &ast.CreateTableStatement{
-		Token:       p.curToken,
 		ColumnNames: make([]string, 0),
 		ColumnTypes: make([]token.Token, 0),
 	}
@@ -488,12 +468,9 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		return nil
 	}
 
-	// assert next token is an identifier
-	if p.peekToken.Type != token.IDENTIFIER {
-		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+	if !p.expectPeek(token.IDENTIFIER) {
 		return nil
 	}
-	p.nextToken()
 	stmt.Name = p.curToken.Literal
 
 	if !p.expectPeek(token.LPAREN) {
@@ -501,40 +478,25 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 	}
 
 	// parse column pairs
-	// assert next token is a column identifier
-	if p.peekToken.Type != token.IDENTIFIER {
-		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+	if !p.expectPeek(token.IDENTIFIER) {
 		return nil
 	}
-	p.nextToken()
-	columnLiteral := p.curToken.Literal
-	stmt.ColumnNames = append(stmt.ColumnNames, columnLiteral)
-
-	// assert next token is a column type
-	if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
-		p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+	stmt.ColumnNames = append(stmt.ColumnNames, p.curToken.Literal)
+	if !p.expectPeekType() {
 		return nil
 	}
-	p.nextToken()
 	stmt.ColumnTypes = append(stmt.ColumnTypes, p.curToken)
 
 	for p.peekToken.Type == token.COMMA {
 		p.nextToken()
-		// assert next token is a column identifier
-		if p.peekToken.Type != token.IDENTIFIER {
-			p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		if !p.expectPeek(token.IDENTIFIER) {
 			return nil
 		}
-		p.nextToken()
-		columnLiteral := p.curToken.Literal
-		stmt.ColumnNames = append(stmt.ColumnNames, columnLiteral)
+		stmt.ColumnNames = append(stmt.ColumnNames, p.curToken.Literal)
 
-		// assert next token is a column type
-		if !(p.peekToken.Type == token.STRING_TYPE || p.peekToken.Type == token.FLOAT_TYPE || p.peekToken.Type == token.INTEGER_TYPE || p.peekToken.Type == token.BOOLEAN_TYPE) {
-			p.errors = append(p.errors, fmt.Sprintf("expected type, got %s token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+		if !p.expectPeekType() {
 			return nil
 		}
-		p.nextToken()
 		stmt.ColumnTypes = append(stmt.ColumnTypes, p.curToken)
 	}
 
@@ -542,19 +504,15 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 		return nil
 	}
 
-	if !(p.peekToken.Type == token.SEMICOLON || p.peekToken.Type == token.EOF) {
-		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
-		p.errors = append(p.errors, msg)
+	if !p.expectPeekIsEndOfStatement() {
 		return nil
 	}
-	p.nextToken()
 
 	return stmt
 }
 
 func (p *Parser) parseInsertStatement() ast.Statement {
 	stmt := &ast.InsertStatement{
-		Token:       p.curToken,
 		Expressions: make([]ast.Expression, 0),
 	}
 
@@ -562,12 +520,9 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 		return nil
 	}
 
-	// assert next token is an identifier
-	if p.peekToken.Type != token.IDENTIFIER {
-		p.errors = append(p.errors, fmt.Sprintf("expected identifier, got %T token with literal %s", p.peekToken.Type, p.peekToken.Literal))
+	if !p.expectPeek(token.IDENTIFIER) {
 		return nil
 	}
-	p.nextToken()
 	stmt.TableName = p.curToken.Literal
 
 	if !p.expectPeek(token.VALUES) {
@@ -601,12 +556,9 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 		return nil
 	}
 
-	if !(p.peekToken.Type == token.SEMICOLON || p.peekToken.Type == token.EOF) {
-		msg := fmt.Sprintf("expected next token to be %s or %s, got %s '%s' instead", token.SEMICOLON, token.EOF, p.peekToken.Type, p.peekToken.Literal)
-		p.errors = append(p.errors, msg)
+	if !p.expectPeekIsEndOfStatement() {
 		return nil
 	}
-	p.nextToken()
 
 	return stmt
 }
