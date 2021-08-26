@@ -231,6 +231,7 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseElementInSelect() (ast.Expression, string) {
+	p.nextToken()
 	expr := p.parseExpression(LOWEST)
 	// check for AS
 	if p.peekToken.Type == token.AS {
@@ -244,52 +245,60 @@ func (p *Parser) parseElementInSelect() (ast.Expression, string) {
 	return expr, ""
 }
 
+func (p *Parser) parseJoin() *ast.Join {
+	p.nextToken()
+	if !p.expectPeek(token.IDENTIFIER) {
+		return nil
+	}
+	joinWith := &ast.From{
+		Table: p.curToken.Literal,
+	}
+	if p.peekToken.Type == token.IDENTIFIER {
+		p.nextToken()
+		joinWith.TableAlias = p.curToken.Literal
+	}
+	if !p.expectPeek(token.ON) {
+		return nil
+	}
+	p.nextToken()
+	joinExpr := p.parseExpression(LOWEST)
+	join := &ast.Join{
+		With:      joinWith,
+		Predicate: joinExpr,
+		JoinType:  ast.INNERJOIN,
+	}
+	// table alias
+	if p.peekToken.Type == token.IDENTIFIER {
+		p.nextToken()
+		join.With.TableAlias = p.curToken.Literal
+	}
+	return join
+}
+
 func (p *Parser) parseFrom() *ast.From {
+	p.nextToken()
 	if !p.expectPeek(token.IDENTIFIER) {
 		return nil
 	}
 	from := &ast.From{Table: p.curToken.Literal}
 
-	// table alias
 	if p.peekToken.Type == token.IDENTIFIER {
-		from.TableAlias = p.peekToken.Literal
 		p.nextToken()
+		from.TableAlias = p.curToken.Literal
 	}
 
 	if p.peekToken.Type == token.JOIN {
-		p.nextToken()
-		if !p.expectPeek(token.IDENTIFIER) {
+		join := p.parseJoin()
+		if join == nil {
 			return nil
 		}
-		joinWith := &ast.From{
-			Table: p.curToken.Literal,
-		}
-		// table alias
-		if p.peekToken.Type == token.IDENTIFIER {
-			joinWith.TableAlias = p.peekToken.Literal
-			p.nextToken()
-		}
-		if !p.expectPeek(token.ON) {
-			return nil
-		}
-		p.nextToken()
-		joinExpr := p.parseExpression(LOWEST)
-		from.Join = &ast.Join{
-			With:      joinWith,
-			Predicate: joinExpr,
-			JoinType:  ast.INNERJOIN,
-		}
-		// table alias
-		if p.peekToken.Type == token.IDENTIFIER {
-			from.Join.With.TableAlias = p.peekToken.Literal
-			p.nextToken()
-		}
+		from.Join = join
 	}
 	return from
 }
 
 func (p *Parser) parseOrderBy() *ast.OrderByExpression {
-	// The sort expression(s) can be any expression that would be valid in the query's select list. An example is:
+	p.nextToken()
 	sortExpr := p.parseExpression(LOWEST)
 	if sortExpr == nil {
 		return nil
@@ -359,7 +368,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		Limit:       nil,
 		Where:       nil,
 	}
-	p.nextToken() // read SELECT token
 	expression, alias := p.parseElementInSelect()
 	if expression == nil {
 		return nil
@@ -368,7 +376,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 	stmt.Aliases = append(stmt.Aliases, alias)
 
 	for p.peekToken.Type == token.COMMA {
-		p.nextToken()
 		p.nextToken()
 		expression, alias := p.parseElementInSelect()
 		if expression == nil {
@@ -379,7 +386,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 	}
 
 	if p.peekToken.Type == token.FROM {
-		p.nextToken()
 		from := p.parseFrom()
 		if from == nil {
 			return nil
@@ -388,7 +394,6 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 	}
 
 	for p.peekToken.Type == token.COMMA {
-		p.nextToken()
 		from := p.parseFrom()
 		if from == nil {
 			return nil
@@ -407,14 +412,12 @@ func (p *Parser) parseSelectStatement() ast.Statement {
 		if !p.expectPeek(token.BY) {
 			return nil
 		}
-		p.nextToken()
 		orderBy := p.parseOrderBy()
 		if orderBy == nil {
 			return nil
 		}
 		stmt.OrderBy = append(stmt.OrderBy, orderBy)
 		for p.peekToken.Type == token.COMMA {
-			p.nextToken()
 			p.nextToken()
 			orderBy := p.parseOrderBy()
 			if orderBy == nil {
