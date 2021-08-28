@@ -24,10 +24,27 @@ name     first_appeared
 >> select 1, 3.14 as pi, '✅' as emoji, 'Vegard' as name
 1 pi       emoji name
 1 3.140000 '✅'   'Vegard'
->> select 1 + '3.14'
-ERROR: unknown operator: INTEGER + STRING
->> 1
-ERROR: expected start of statement, got INT token with literal 1
+>> create table nums (n int)
+OK
+>> insert into nums values (1)
+OK
+>> insert into nums values (2)
+OK
+>> insert into nums values (3)
+OK
+>> create table squares (n int, s int)
+OK
+>> insert into squares values (1, 1)
+OK
+>> insert into squares values (2, 4)
+OK
+>> insert into squares values (3, 9)
+OK
+>> select nums.n, squares.s from nums join squares on nums.n = squares.n
+n s
+1 1
+2 4
+3 9
 ```
 
 Based on Thorsten Ball's excellent [Writing an Interpreter in Go](https://interpreterbook.com/).
