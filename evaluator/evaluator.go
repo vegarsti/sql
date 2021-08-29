@@ -10,7 +10,7 @@ import (
 
 type Backend interface {
 	CreateTable(string, []object.Column) error
-	InsertInto(string, object.Row) error
+	Insert(string, object.Row) error
 	Rows(string) ([]object.Row, error)
 	Columns(string) []string
 }
@@ -445,7 +445,7 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 		row.Values[i] = obj
 		row.TableName[i] = is.TableName
 	}
-	if err := backend.InsertInto(is.TableName, row); err != nil {
+	if err := backend.Insert(is.TableName, row); err != nil {
 		return newError(err.Error())
 	}
 	return &object.OK{}
