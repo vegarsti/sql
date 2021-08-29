@@ -12,7 +12,7 @@ type Backend interface {
 	CreateTable(string, []object.Column) error
 	InsertInto(string, object.Row) error
 	Rows(string) ([]object.Row, error)
-	ColumnsInTable(string) []string
+	Columns(string) []string
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -156,7 +156,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			tableToAlias[from.Table] = from.TableAlias
 		}
 		tableReferences[table]++
-		for _, c := range backend.ColumnsInTable(from.Table) {
+		for _, c := range backend.Columns(from.Table) {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
 			}
@@ -169,7 +169,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 				tableToAlias[from.TableAlias] = from.Table
 			}
 			tableReferences[table]++
-			for _, c := range backend.ColumnsInTable(from.Join.With.Table) {
+			for _, c := range backend.Columns(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
 				}
@@ -424,7 +424,7 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 }
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
-	columns := backend.ColumnsInTable(is.TableName)
+	columns := backend.Columns(is.TableName)
 	if len(columns) != len(is.Expressions) {
 		var columnsPlural, valuesPlural string
 		if len(columns) > 1 {
