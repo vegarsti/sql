@@ -105,7 +105,7 @@ func (tb *testBackend) Rows(name string) ([]object.Row, error) {
 	return rows, nil
 }
 
-func (tb *testBackend) ColumnsInTable(name string) []string {
+func (tb *testBackend) Columns(name string) []string {
 	return tb.columns[name]
 }
 
