@@ -495,6 +495,8 @@ func TestEvalInsert(t *testing.T) {
 			{Name: "b", Type: object.DataType("INTEGER")},
 			{Name: "c", Type: object.DataType("DOUBLE")},
 		}
+		backend.columns["foo"] = []string{"a", "b", "c"}
+
 		evaluated := testEval(backend, tt.input)
 		if _, ok := evaluated.(*object.OK); !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
