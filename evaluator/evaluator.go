@@ -425,6 +425,16 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	columns := backend.ColumnsInTable(is.TableName)
+	if len(columns) != len(is.Expressions) {
+		var columnsPlural, valuesPlural string
+		if len(columns) > 1 {
+			columnsPlural = "s"
+		}
+		if len(is.Expressions) > 1 {
+			valuesPlural = "s"
+		}
+		return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(is.Expressions), valuesPlural)
+	}
 	row := object.Row{
 		Values:    make([]object.Object, len(is.Expressions)),
 		TableName: make([]string, len(is.Expressions)),

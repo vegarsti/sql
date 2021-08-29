@@ -248,7 +248,7 @@ func testStringObject(t *testing.T, obj object.Object, expected string) bool {
 	return true
 }
 
-func TestSelectErrors(t *testing.T) {
+func TestErrors(t *testing.T) {
 	tests := []struct {
 		input                string
 		expectedErrorMessage string
@@ -260,6 +260,7 @@ func TestSelectErrors(t *testing.T) {
 		{"select a from foo where 1", `argument of WHERE must be type boolean, not type integer: 1`},
 		{"select foo.a from foo f where 1", `invalid reference to FROM-clause entry for table "foo". Perhaps you meant to reference the table alias "f"`},
 		{"select 1 from foo, foo", `table name "foo" specified more than once`},
+		{"insert into foo values (1)", `table "foo" has 3 columns but 1 value were supplied`},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
@@ -494,6 +495,8 @@ func TestEvalInsert(t *testing.T) {
 			{Name: "b", Type: object.DataType("INTEGER")},
 			{Name: "c", Type: object.DataType("DOUBLE")},
 		}
+		backend.columns["foo"] = []string{"a", "b", "c"}
+
 		evaluated := testEval(backend, tt.input)
 		if _, ok := evaluated.(*object.OK); !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
