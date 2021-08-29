@@ -82,7 +82,7 @@ func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
 	return nil
 }
 
-func (tb *testBackend) InsertInto(name string, row object.Row) error {
+func (tb *testBackend) Insert(name string, row object.Row) error {
 	if _, ok := tb.tables[name]; !ok {
 		return fmt.Errorf(`relation "%s" does not exist`, name)
 	}
