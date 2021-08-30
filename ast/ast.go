@@ -86,15 +86,15 @@ func (cts *CreateTableStatement) String() string {
 }
 
 type InsertStatement struct {
-	TableName   string
-	Expressions []Expression
+	TableName string
+	Rows      [][]Expression
 }
 
 func (is *InsertStatement) statementNode()       {}
 func (is *InsertStatement) TokenLiteral() string { return "INSERT" }
 func (is *InsertStatement) String() string {
-	expressions := make([]string, len(is.Expressions))
-	for i, e := range is.Expressions {
+	expressions := make([]string, len(is.Rows[0]))
+	for i, e := range is.Rows[0] {
 		expressions[i] = e.String()
 	}
 	return "INSERT INTO " + is.TableName + " VALUES " + "(" + strings.Join(expressions, ", ") + ")"
