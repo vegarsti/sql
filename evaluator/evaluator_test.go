@@ -486,16 +486,16 @@ func TestEvalCreateTable(t *testing.T) {
 
 func TestEvalInsert(t *testing.T) {
 	tests := []struct {
-		input          string
-		expectedValues []object.Object
+		input        string
+		expectedRows [][]object.Object
 	}{
 		{
 			"insert into foo values ('abc', 1, 3.14)",
-			[]object.Object{
+			[][]object.Object{{
 				&object.String{Value: "abc"},
 				&object.Integer{Value: 1},
 				&object.Float{Value: 3.14},
-			},
+			}},
 		},
 	}
 	for _, tt := range tests {
@@ -519,18 +519,20 @@ func TestEvalInsert(t *testing.T) {
 		if !ok {
 			t.Fatalf("row doesn't exist")
 		}
-		if len(rows) != 1 {
-			t.Fatalf("expected table to have %d rows. got=%d", 1, len(rows))
+		if len(rows) != len(tt.expectedRows) {
+			t.Fatalf("expected table to have %d rows. got=%d", len(tt.expectedRows), len(rows))
 		}
-		for i := range tt.expectedValues {
-			if rows[0].Values[i].Type() != tt.expectedValues[i].Type() {
-				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Type(), rows[0].Values[i].Type())
-			}
-			if rows[0].Values[i].Inspect() != tt.expectedValues[i].Inspect() {
-				t.Fatalf("expected row[%d] to have %v value. got=%v", i, tt.expectedValues[i].Inspect(), rows[0].Values[i].Inspect())
+		for i, expectedValues := range tt.expectedRows {
+			for j := range expectedValues {
+				if rows[i].Values[j].Type() != expectedValues[j].Type() {
+					t.Fatalf("expected rows[%d][%d] to have %v value. got=%v", i, j, expectedValues[j].Type(), rows[i].Values[j].Type())
+				}
+				if rows[i].Values[j].Inspect() != expectedValues[j].Inspect() {
+					t.Fatalf("expected rows[%d][%d] to have %v value. got=%v", i, j, expectedValues[j].Inspect(), rows[i].Values[j].Inspect())
+				}
 			}
 			expectedAliases := "a, b, c"
-			gotAliases := strings.Join(rows[0].Aliases, ", ")
+			gotAliases := strings.Join(rows[i].Aliases, ", ")
 			if gotAliases != expectedAliases {
 				t.Fatalf("expected aliases to be %s. got=%s", expectedAliases, gotAliases)
 			}
