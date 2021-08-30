@@ -364,9 +364,10 @@ func TestEvalSelectMultiple(t *testing.T) {
 }
 
 type testBackend struct {
-	tables  map[string][]object.Column
-	rows    map[string][]object.Row
-	columns map[string][]string
+	tables      map[string][]object.Column
+	rows        map[string][]object.Row
+	columns     map[string][]string
+	columnTypes map[string][]object.DataType
 }
 
 func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
@@ -376,8 +377,10 @@ func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
 	tb.tables[name] = columns
 	tb.rows[name] = make([]object.Row, 0)
 	tb.columns[name] = make([]string, len(columns))
+	tb.columnTypes[name] = make([]object.DataType, len(columns))
 	for i, c := range columns {
 		tb.columns[name][i] = c.Name
+		tb.columnTypes[name][i] = c.Type
 	}
 	return nil
 }
@@ -409,11 +412,16 @@ func (tb *testBackend) Columns(name string) []string {
 	return tb.columns[name]
 }
 
+func (tb *testBackend) ColumnTypes(name string) []object.DataType {
+	return tb.columnTypes[name]
+}
+
 func newTestBackend() *testBackend {
 	return &testBackend{
-		tables:  make(map[string][]object.Column),
-		rows:    make(map[string][]object.Row),
-		columns: make(map[string][]string),
+		tables:      make(map[string][]object.Column),
+		rows:        make(map[string][]object.Row),
+		columns:     make(map[string][]string),
+		columnTypes: make(map[string][]object.DataType),
 	}
 }
 
@@ -496,6 +504,7 @@ func TestEvalInsert(t *testing.T) {
 			{Name: "c", Type: object.DataType("DOUBLE")},
 		}
 		backend.columns["foo"] = []string{"a", "b", "c"}
+		backend.columnTypes["foo"] = []object.DataType{object.STRING, object.STRING, object.STRING}
 
 		evaluated := testEval(backend, tt.input)
 		if _, ok := evaluated.(*object.OK); !ok {
