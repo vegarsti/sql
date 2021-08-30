@@ -13,6 +13,7 @@ type Backend interface {
 	Insert(string, object.Row) error
 	Rows(string) ([]object.Row, error)
 	Columns(string) []string
+	ColumnTypes(string) []object.DataType
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
