@@ -444,6 +444,9 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 		}
 		for i, es := range rowToInsert {
 			obj := Eval(backend, es)
+			if errorObj, ok := obj.(*object.Error); ok {
+				return errorObj
+			}
 			row.Values[i] = obj
 			row.TableName[i] = is.TableName
 		}
