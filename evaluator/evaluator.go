@@ -432,7 +432,7 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 			if len(columns) > 1 {
 				columnsPlural = "s"
 			}
-			if len(is.Rows[0]) > 1 {
+			if len(rowToInsert) > 1 {
 				valuesPlural = "s"
 			}
 			return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(rowToInsert), valuesPlural)
