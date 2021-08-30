@@ -262,6 +262,8 @@ func TestErrors(t *testing.T) {
 		{"select 1 from foo, foo", `table name "foo" specified more than once`},
 		{"insert into foo values (1)", `table "foo" has 2 columns but 1 value were supplied`},
 		{"insert into foo values (1)", `table "foo" has 2 columns but 1 value were supplied`},
+		{"insert into foo values ('hello', 'world')", `cannot insert STRING with value 'world' in INTEGER column in table "foo"`},
+		{"insert into foo values (1, 2)", `cannot insert INTEGER with value 1 in STRING column in table "foo"`},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()

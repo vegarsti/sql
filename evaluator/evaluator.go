@@ -446,6 +446,13 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 		row.Values[i] = obj
 		row.TableName[i] = is.TableName
 	}
+	columnTypes := backend.ColumnTypes(is.TableName)
+	for i, value := range row.Values {
+		t := value.Type()
+		if object.DataType(string(t)) != columnTypes[i] {
+			return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
+		}
+	}
 	if err := backend.Insert(is.TableName, row); err != nil {
 		return newError(err.Error())
 	}
