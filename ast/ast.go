@@ -93,11 +93,15 @@ type InsertStatement struct {
 func (is *InsertStatement) statementNode()       {}
 func (is *InsertStatement) TokenLiteral() string { return "INSERT" }
 func (is *InsertStatement) String() string {
-	expressions := make([]string, len(is.Rows[0]))
-	for i, e := range is.Rows[0] {
-		expressions[i] = e.String()
+	rows := make([]string, len(is.Rows))
+	for i, row := range is.Rows {
+		expressions := make([]string, len(row))
+		for j, e := range row {
+			expressions[j] = e.String()
+		}
+		rows[i] = "(" + strings.Join(expressions, ", ") + ")"
 	}
-	return "INSERT INTO " + is.TableName + " VALUES " + "(" + strings.Join(expressions, ", ") + ")"
+	return "INSERT INTO " + is.TableName + " VALUES " + strings.Join(rows, ", ")
 }
 
 type Program struct {
