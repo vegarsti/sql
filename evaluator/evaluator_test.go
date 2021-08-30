@@ -260,7 +260,8 @@ func TestErrors(t *testing.T) {
 		{"select a from foo where 1", `argument of WHERE must be type boolean, not type integer: 1`},
 		{"select foo.a from foo f where 1", `invalid reference to FROM-clause entry for table "foo". Perhaps you meant to reference the table alias "f"`},
 		{"select 1 from foo, foo", `table name "foo" specified more than once`},
-		{"insert into foo values (1)", `table "foo" has 3 columns but 1 value were supplied`},
+		{"insert into foo values (1)", `table "foo" has 2 columns but 1 value were supplied`},
+		{"insert into foo values (1)", `table "foo" has 2 columns but 1 value were supplied`},
 	}
 	for _, tt := range tests {
 		backend := newTestBackend()
@@ -268,30 +269,27 @@ func TestErrors(t *testing.T) {
 		// table `foo`
 		backend.tables["foo"] = []object.Column{
 			{Name: "a", Type: object.STRING},
-			{Name: "b", Type: object.STRING},
 			{Name: "c", Type: object.INTEGER},
 		}
 		backend.rows["foo"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "abc"},
-					&object.String{Value: "efg"},
 					&object.Integer{Value: 1},
 				},
-				Aliases:   []string{"a", "b", "c"},
-				TableName: []string{"foo", "foo", "foo"},
+				Aliases:   []string{"a", "c"},
+				TableName: []string{"foo", "foo"},
 			},
 			{
 				Values: []object.Object{
 					&object.String{Value: "bcd"},
-					&object.String{Value: "def"},
 					&object.Integer{Value: 2},
 				},
-				Aliases:   []string{"a", "b", "c"},
-				TableName: []string{"foo", "foo", "foo"},
+				Aliases:   []string{"a", "c"},
+				TableName: []string{"foo", "foo"},
 			},
 		}
-		backend.columns["foo"] = []string{"a", "b", "c"}
+		backend.columns["foo"] = []string{"a", "c"}
 
 		// table `bar`
 		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.STRING}}
