@@ -426,7 +426,8 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	columns := backend.Columns(is.TableName)
-	for _, rowToInsert := range is.Rows {
+	rowsToInsert := make([]object.Row, len(is.Rows))
+	for i, rowToInsert := range is.Rows {
 		if len(columns) != len(rowToInsert) {
 			var columnsPlural, valuesPlural string
 			if len(columns) > 1 {
@@ -457,6 +458,9 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 				return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
 			}
 		}
+		rowsToInsert[i] = row
+	}
+	for _, row := range rowsToInsert {
 		if err := backend.Insert(is.TableName, row); err != nil {
 			return newError(err.Error())
 		}
