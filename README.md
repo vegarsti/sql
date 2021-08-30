@@ -8,13 +8,7 @@
 $ go run cmd/sql/main.go
 >> create table programming_languages (name text, first_appeared integer);
 OK
->> insert into programming_languages values ('C', 1972)
-OK
->> insert into programming_languages values ('Python', 1990)
-OK
->> insert into programming_languages values ('Lisp', 1958)
-OK
->> insert into programming_languages values ('Go', 2009)
+>> insert into programming_languages values ('C', 1972), ('Python', 1990), ('Lisp', 1958), ('Go', 2009)
 OK
 >> select name, first_appeared from programming_languages where first_appeared < 2000 order by first_appeared
 name     first_appeared
@@ -26,19 +20,11 @@ name     first_appeared
 1 3.140000 '✅'   'Vegard'
 >> create table nums (n int)
 OK
->> insert into nums values (1)
-OK
->> insert into nums values (2)
-OK
->> insert into nums values (3)
+>> insert into nums values (1), (2), (3)
 OK
 >> create table squares (n int, s int)
 OK
->> insert into squares values (1, 1)
-OK
->> insert into squares values (2, 4)
-OK
->> insert into squares values (3, 9)
+>> insert into squares values (1, 1), (2, 4), (3, 9)
 OK
 >> select nums.n, squares.s from nums join squares on nums.n = squares.n
 n s
