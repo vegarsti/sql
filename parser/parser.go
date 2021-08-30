@@ -532,42 +532,40 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 		return nil
 	}
 
-	if !p.expectPeek(token.LPAREN) {
-		return nil
-	}
-
-	p.nextToken()
-
-	row := make([]ast.Expression, 0)
-
-	expr := p.parseExpression(LOWEST)
-	if expr == nil {
-		return nil
-	}
-
-	row = append(row, expr)
-
-	for p.peekToken.Type == token.COMMA {
-		p.nextToken()
-		p.nextToken()
-
-		expr := p.parseExpression(LOWEST)
-		if expr == nil {
-			return nil
-		}
-		row = append(row, expr)
-	}
+	row := p.parseInsertRow()
 	stmt.Rows = append(stmt.Rows, row)
-
-	if !p.expectPeek(token.RPAREN) {
-		return nil
-	}
 
 	if !p.expectPeekIsEndOfStatement() {
 		return nil
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseInsertRow() []ast.Expression {
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	row := make([]ast.Expression, 0)
+	expr := p.parseExpression(LOWEST)
+	if expr == nil {
+		return nil
+	}
+	row = append(row, expr)
+	for p.peekToken.Type == token.COMMA {
+		p.nextToken()
+		p.nextToken()
+		expr := p.parseExpression(LOWEST)
+		if expr == nil {
+			return nil
+		}
+		row = append(row, expr)
+	}
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return row
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
