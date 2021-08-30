@@ -1118,52 +1118,63 @@ func TestCreateTable(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	input := "insert into foo values ('abc', 1, 3.14)"
-	l := lexer.New(input)
-	p := parser.New(l)
-
-	program := p.ParseProgram()
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
+	tcs := []struct {
+		input        string
+		expectedRows [][]ast.Expression
+	}{
+		{
+			"insert into foo values ('abc', 1, 3.14)",
+			[][]ast.Expression{{
+				&ast.StringLiteral{Token: token.Token{Literal: "abc", Type: token.STRING_LITERAL}},
+				&ast.IntegerLiteral{Token: token.Token{Literal: "1", Type: token.INT_LITERAL}},
+				&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT_LITERAL}},
+			}},
+		},
 	}
+	for _, tt := range tcs {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
 
-	checkParserErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
-	}
-
-	stmt, ok := program.Statements[0].(*ast.InsertStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.InsertStatement. got=%T", program.Statements[0])
-	}
-
-	if stmt == nil {
-		t.Fatalf("ast.InsertStatement is nil")
-	}
-
-	expectedExpressions := []ast.Expression{
-		&ast.StringLiteral{Token: token.Token{Literal: "abc", Type: token.STRING_LITERAL}},
-		&ast.IntegerLiteral{Token: token.Token{Literal: "1", Type: token.INT_LITERAL}},
-		&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT_LITERAL}},
-	}
-
-	if len(stmt.Rows) != 1 {
-		t.Fatalf("stmt.Rows does not contain 1 row. got=%d", len(stmt.Rows))
-	}
-
-	expressions := stmt.Rows[0]
-
-	if len(expressions) != len(expectedExpressions) {
-		t.Fatalf("stmt does not contain %d expressions. got=%d", len(expressions), len(expectedExpressions))
-	}
-
-	for i, expectedExpr := range expectedExpressions {
-		if expressions[i].TokenLiteral() != expectedExpr.TokenLiteral() {
-			t.Fatalf("expected stmt.Expressions[%d].TokenLiteral() to be %s. got=%s", i, expectedExpr.TokenLiteral(), expressions[i].TokenLiteral())
+		program := p.ParseProgram()
+		if program == nil {
+			t.Fatalf("ParseProgram() returned nil")
 		}
-		if expressions[i].String() != expectedExpr.String() {
-			t.Fatalf("expected stmt.Expressions[%d].String() to be %s. got=%s", i, expectedExpr.String(), expressions[i].String())
+
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.InsertStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.InsertStatement. got=%T", program.Statements[0])
+		}
+
+		if stmt == nil {
+			t.Fatalf("ast.InsertStatement is nil")
+		}
+
+		if len(stmt.Rows) != 1 {
+			t.Fatalf("stmt.Rows does not contain 1 row. got=%d", len(stmt.Rows))
+		}
+
+		for i := range tt.expectedRows {
+			expectedExpressions := tt.expectedRows[i]
+			expressions := stmt.Rows[i]
+
+			if len(expressions) != len(expectedExpressions) {
+				t.Fatalf("stmt does not contain %d expressions. got=%d", len(expressions), len(expectedExpressions))
+			}
+
+			for i, expectedExpr := range expectedExpressions {
+				if expressions[i].TokenLiteral() != expectedExpr.TokenLiteral() {
+					t.Fatalf("expected stmt.Expressions[%d].TokenLiteral() to be %s. got=%s", i, expectedExpr.TokenLiteral(), expressions[i].TokenLiteral())
+				}
+				if expressions[i].String() != expectedExpr.String() {
+					t.Fatalf("expected stmt.Expressions[%d].String() to be %s. got=%s", i, expectedExpr.String(), expressions[i].String())
+				}
+			}
 		}
 	}
 }
