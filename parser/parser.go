@@ -516,7 +516,7 @@ func (p *Parser) parseCreateTableStatement() ast.Statement {
 
 func (p *Parser) parseInsertStatement() ast.Statement {
 	stmt := &ast.InsertStatement{
-		Expressions: make([]ast.Expression, 0),
+		Rows: make([][]ast.Expression, 0),
 	}
 
 	if !p.expectPeek(token.INTO) {
@@ -538,11 +538,14 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 
 	p.nextToken()
 
+	row := make([]ast.Expression, 0)
+
 	expr := p.parseExpression(LOWEST)
 	if expr == nil {
 		return nil
 	}
-	stmt.Expressions = append(stmt.Expressions, expr)
+
+	row = append(row, expr)
 
 	for p.peekToken.Type == token.COMMA {
 		p.nextToken()
@@ -552,8 +555,9 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 		if expr == nil {
 			return nil
 		}
-		stmt.Expressions = append(stmt.Expressions, expr)
+		row = append(row, expr)
 	}
+	stmt.Rows = append(stmt.Rows, row)
 
 	if !p.expectPeek(token.RPAREN) {
 		return nil

@@ -1148,16 +1148,22 @@ func TestInsert(t *testing.T) {
 		&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT_LITERAL}},
 	}
 
-	if len(stmt.Expressions) != len(expectedExpressions) {
-		t.Fatalf("stmt does not contain %d expressions. got=%d", len(stmt.Expressions), len(expectedExpressions))
+	if len(stmt.Rows) != 1 {
+		t.Fatalf("stmt.Rows does not contain 1 row. got=%d", len(stmt.Rows))
+	}
+
+	expressions := stmt.Rows[0]
+
+	if len(expressions) != len(expectedExpressions) {
+		t.Fatalf("stmt does not contain %d expressions. got=%d", len(expressions), len(expectedExpressions))
 	}
 
 	for i, expectedExpr := range expectedExpressions {
-		if stmt.Expressions[i].TokenLiteral() != expectedExpr.TokenLiteral() {
-			t.Fatalf("expected stmt.Expressions[%d].TokenLiteral() to be %s. got=%s", i, expectedExpr.TokenLiteral(), stmt.Expressions[i].TokenLiteral())
+		if expressions[i].TokenLiteral() != expectedExpr.TokenLiteral() {
+			t.Fatalf("expected stmt.Expressions[%d].TokenLiteral() to be %s. got=%s", i, expectedExpr.TokenLiteral(), expressions[i].TokenLiteral())
 		}
-		if stmt.Expressions[i].String() != expectedExpr.String() {
-			t.Fatalf("expected stmt.Expressions[%d].String() to be %s. got=%s", i, expectedExpr.String(), stmt.Expressions[i].String())
+		if expressions[i].String() != expectedExpr.String() {
+			t.Fatalf("expected stmt.Expressions[%d].String() to be %s. got=%s", i, expectedExpr.String(), expressions[i].String())
 		}
 	}
 }
