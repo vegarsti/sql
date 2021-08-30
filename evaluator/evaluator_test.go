@@ -490,12 +490,19 @@ func TestEvalInsert(t *testing.T) {
 		expectedRows [][]object.Object
 	}{
 		{
-			"insert into foo values ('abc', 1, 3.14)",
-			[][]object.Object{{
-				&object.String{Value: "abc"},
-				&object.Integer{Value: 1},
-				&object.Float{Value: 3.14},
-			}},
+			"insert into foo values ('abc', 1, 3.14), ('def', 2, 6.28)",
+			[][]object.Object{
+				{
+					&object.String{Value: "abc"},
+					&object.Integer{Value: 1},
+					&object.Float{Value: 3.14},
+				},
+				{
+					&object.String{Value: "def"},
+					&object.Integer{Value: 2},
+					&object.Float{Value: 6.28},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {

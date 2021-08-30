@@ -426,35 +426,37 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	columns := backend.Columns(is.TableName)
-	if len(columns) != len(is.Rows[0]) {
-		var columnsPlural, valuesPlural string
-		if len(columns) > 1 {
-			columnsPlural = "s"
+	for _, rowToInsert := range is.Rows {
+		if len(columns) != len(rowToInsert) {
+			var columnsPlural, valuesPlural string
+			if len(columns) > 1 {
+				columnsPlural = "s"
+			}
+			if len(is.Rows[0]) > 1 {
+				valuesPlural = "s"
+			}
+			return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(rowToInsert), valuesPlural)
 		}
-		if len(is.Rows[0]) > 1 {
-			valuesPlural = "s"
+		row := object.Row{
+			Values:    make([]object.Object, len(rowToInsert)),
+			TableName: make([]string, len(rowToInsert)),
+			Aliases:   columns,
 		}
-		return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(is.Rows[0]), valuesPlural)
-	}
-	row := object.Row{
-		Values:    make([]object.Object, len(is.Rows[0])),
-		TableName: make([]string, len(is.Rows[0])),
-		Aliases:   columns,
-	}
-	for i, es := range is.Rows[0] {
-		obj := Eval(backend, es)
-		row.Values[i] = obj
-		row.TableName[i] = is.TableName
-	}
-	columnTypes := backend.ColumnTypes(is.TableName)
-	for i, value := range row.Values {
-		t := value.Type()
-		if object.DataType(string(t)) != columnTypes[i] {
-			return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
+		for i, es := range rowToInsert {
+			obj := Eval(backend, es)
+			row.Values[i] = obj
+			row.TableName[i] = is.TableName
 		}
-	}
-	if err := backend.Insert(is.TableName, row); err != nil {
-		return newError(err.Error())
+		columnTypes := backend.ColumnTypes(is.TableName)
+		for i, value := range row.Values {
+			t := value.Type()
+			if object.DataType(string(t)) != columnTypes[i] {
+				return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
+			}
+		}
+		if err := backend.Insert(is.TableName, row); err != nil {
+			return newError(err.Error())
+		}
 	}
 	return &object.OK{}
 }
