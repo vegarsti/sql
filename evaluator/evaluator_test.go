@@ -290,10 +290,12 @@ func TestErrors(t *testing.T) {
 			},
 		}
 		backend.columns["foo"] = []string{"a", "c"}
+		backend.columnTypes["foo"] = []object.DataType{object.STRING, object.INTEGER}
 
 		// table `bar`
 		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.STRING}}
 		backend.columns["bar"] = []string{"a"}
+		backend.columnTypes["bar"] = []object.DataType{object.STRING}
 
 		evaluated := testEval(backend, tt.input)
 		testError(t, evaluated, tt.expectedErrorMessage)
@@ -502,12 +504,12 @@ func TestEvalInsert(t *testing.T) {
 			{Name: "c", Type: object.DataType("DOUBLE")},
 		}
 		backend.columns["foo"] = []string{"a", "b", "c"}
-		backend.columnTypes["foo"] = []object.DataType{object.STRING, object.STRING, object.STRING}
+		backend.columnTypes["foo"] = []object.DataType{object.STRING, object.INTEGER, object.FLOAT}
 
 		evaluated := testEval(backend, tt.input)
 		if _, ok := evaluated.(*object.OK); !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
-				t.Fatalf("object is Error: %s", errorEvaluated.Inspect())
+				t.Fatalf("%s: %s", tt.input, errorEvaluated.Inspect())
 			}
 			t.Fatalf("object is not OK. got=%T", evaluated)
 		}
