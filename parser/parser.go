@@ -533,7 +533,18 @@ func (p *Parser) parseInsertStatement() ast.Statement {
 	}
 
 	row := p.parseInsertRow()
+	if row == nil {
+		return nil
+	}
 	stmt.Rows = append(stmt.Rows, row)
+	for p.peekToken.Type == token.COMMA {
+		p.nextToken()
+		row = p.parseInsertRow()
+		if row == nil {
+			return nil
+		}
+		stmt.Rows = append(stmt.Rows, row)
+	}
 
 	if !p.expectPeekIsEndOfStatement() {
 		return nil

@@ -1130,6 +1130,13 @@ func TestInsert(t *testing.T) {
 				&ast.FloatLiteral{Token: token.Token{Literal: "3.14", Type: token.FLOAT_LITERAL}},
 			}},
 		},
+		{
+			"insert into foo values (1), (2)",
+			[][]ast.Expression{
+				{&ast.IntegerLiteral{Token: token.Token{Literal: "1", Type: token.INT_LITERAL}}},
+				{&ast.IntegerLiteral{Token: token.Token{Literal: "2", Type: token.INT_LITERAL}}},
+			},
+		},
 	}
 	for _, tt := range tcs {
 		l := lexer.New(tt.input)
@@ -1155,8 +1162,8 @@ func TestInsert(t *testing.T) {
 			t.Fatalf("ast.InsertStatement is nil")
 		}
 
-		if len(stmt.Rows) != 1 {
-			t.Fatalf("stmt.Rows does not contain 1 row. got=%d", len(stmt.Rows))
+		if len(stmt.Rows) != len(tt.expectedRows) {
+			t.Fatalf("stmt.Rows does not contain %d row. got=%d", len(tt.expectedRows), len(stmt.Rows))
 		}
 
 		for i := range tt.expectedRows {
