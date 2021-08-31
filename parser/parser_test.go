@@ -1278,7 +1278,7 @@ func TestParseMultipleStatementsError(t *testing.T) {
 }
 
 func TestSelectJoin(t *testing.T) {
-	input := "select f.a, z.x + q.y from foo f join bar b on f.a = b.b, baz z join qux q on x = y"
+	input := "select f.a, z.x + q.y from foo f join bar b on f.a = b.b, baz z join qux q on x = y join wut on true join aagh on false"
 	l := lexer.New(input)
 	p := parser.New(l)
 
@@ -1365,5 +1365,24 @@ func TestSelectJoin(t *testing.T) {
 	expectedJoinPred2 := "(x = y)"
 	if stmt.From[1].Join.Predicate.String() != expectedJoinPred2 {
 		t.Fatalf("stmt.From[1].Join.Predicate is not %s. got=%s", expectedJoinPred2, stmt.From[1].Join.Predicate)
+	}
+	if stmt.From[1].Join.With.Join == nil {
+		t.Fatalf("stmt.From[1].Join.With.Join is nil")
+	}
+	expectedJoinTable3 := "wut"
+	if stmt.From[1].Join.With.Join.With.Table != expectedJoinTable3 {
+		t.Fatalf("stmt.From[1].Join.With.Join.With.Table is not %s. got=%s", expectedJoinTable3, stmt.From[1].Join.With.Join.With.Table)
+	}
+	expectedJoinPred3 := "TRUE"
+	if stmt.From[1].Join.With.Join.Predicate.String() != expectedJoinPred3 {
+		t.Fatalf("stmt.From[1].Join.With.Join.Predicate is not %s. got=%s", expectedJoinPred3, stmt.From[1].Join.With.Join.Predicate)
+	}
+	expectedJoinTable4 := "aagh"
+	if stmt.From[1].Join.With.Join.With.Join.With.Table != expectedJoinTable4 {
+		t.Fatalf("stmt.From[1].Join.With.Join.With.Join.With.Table is not %s. got=%s", expectedJoinTable4, stmt.From[1].Join.With.Join.With.Join.With.Table)
+	}
+	expectedJoinPred4 := "FALSE"
+	if stmt.From[1].Join.With.Join.With.Join.Predicate.String() != expectedJoinPred4 {
+		t.Fatalf("stmt.From[1].Join.With.Join.With.Join.Predicate is not %s. got=%s", expectedJoinPred4, stmt.From[1].Join.With.Join.With.Join.Predicate)
 	}
 }

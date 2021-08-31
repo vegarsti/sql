@@ -272,6 +272,13 @@ func (p *Parser) parseJoin() *ast.Join {
 		p.nextToken()
 		join.With.TableAlias = p.curToken.Literal
 	}
+	if p.peekToken.Type == token.JOIN {
+		join := p.parseJoin()
+		if join == nil {
+			return nil
+		}
+		joinWith.Join = join
+	}
 	return join
 }
 
