@@ -142,11 +142,9 @@ func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
 
-func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
-	// 1) Traverse tree looking for any column identifiers
-	// 2) Get rows from backend if applicable
-	// 3) For each row, evaluate expression
-
+// normalizeIdentifiers mutates all identifiers so that we have the table name and column name for all identifiers
+// We may return a non-nil error here, which should be returned back to the user
+func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 	columns := make(map[string]map[string]bool)
 	tableToAlias := make(map[string]string)
 	tableReferences := make(map[string]int)
@@ -181,7 +179,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 
 	for table, count := range tableReferences {
 		if count > 1 {
-			return newError(`table name "%s" specified more than once`, table)
+			return fmt.Errorf(`table name "%s" specified more than once`, table)
 		}
 	}
 
@@ -190,7 +188,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	for _, expr := range stmt.Expressions {
 		ids, err := identifiersInExpression(expr)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
@@ -198,7 +196,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		if from.Join != nil {
 			ids, err := identifiersInExpression(from.Join.Predicate)
 			if err != nil {
-				return newError(err.Error())
+				return err
 			}
 			allIdentifiers = append(allIdentifiers, ids...)
 		}
@@ -206,14 +204,14 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	if stmt.Where != nil {
 		ids, err := identifiersInExpression(stmt.Where)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
 	for _, orderBy := range stmt.OrderBy {
 		ids, err := identifiersInExpression(orderBy.Expression)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
@@ -249,10 +247,10 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 				}
 			}
 			if alias, ok := tableToAlias[id.Table]; missingFrom && ok {
-				return newError(`invalid reference to FROM-clause entry for table "%s". Perhaps you meant to reference the table alias "%s"`, id.Table, alias)
+				return fmt.Errorf(`invalid reference to FROM-clause entry for table "%s". Perhaps you meant to reference the table alias "%s"`, id.Table, alias)
 			}
 			if missingFrom {
-				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+				return fmt.Errorf(`missing FROM-clause entry for table "%s"`, id.Table)
 			}
 		}
 	}
@@ -261,19 +259,27 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	for _, identifier := range allIdentifiers {
 		tables, ok := columns[identifier.Value]
 		if !ok {
-			return newError(`column "%s" does not exist`, identifier.Value)
+			return fmt.Errorf(`column "%s" does not exist`, identifier.Value)
 		}
 		if identifier.Table != "" {
 			continue
 		}
 		if len(tables) > 1 {
-			return newError(`column reference "%s" is ambiguous`, identifier.Value)
+			return fmt.Errorf(`column reference "%s" is ambiguous`, identifier.Value)
 		}
 		var table string
 		for t := range tables {
 			table = t
 		}
 		identifier.Table = table
+	}
+	return nil
+}
+
+func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
+	// Traverse AST and get all column identifiers and normalize them
+	if err := normalizeIdentifiers(backend, stmt); err != nil {
+		return newError(err.Error())
 	}
 
 	// fetch rows
