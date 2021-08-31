@@ -142,11 +142,9 @@ func identifiersInExpression(node ast.Expression) ([]*ast.Identifier, error) {
 	return nil, fmt.Errorf("unknown expression type %T", node)
 }
 
-func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
-	// 1) Traverse tree looking for any column identifiers
-	// 2) Get rows from backend if applicable
-	// 3) For each row, evaluate expression
-
+// normalizeIdentifiers mutates all identifiers so that we have the table name and column name for all identifiers
+// We may return a non-nil error here, which should be returned back to the user
+func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 	columns := make(map[string]map[string]bool)
 	tableToAlias := make(map[string]string)
 	tableReferences := make(map[string]int)
@@ -181,7 +179,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 
 	for table, count := range tableReferences {
 		if count > 1 {
-			return newError(`table name "%s" specified more than once`, table)
+			return fmt.Errorf(`table name "%s" specified more than once`, table)
 		}
 	}
 
@@ -190,7 +188,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	for _, expr := range stmt.Expressions {
 		ids, err := identifiersInExpression(expr)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
@@ -198,7 +196,7 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		if from.Join != nil {
 			ids, err := identifiersInExpression(from.Join.Predicate)
 			if err != nil {
-				return newError(err.Error())
+				return err
 			}
 			allIdentifiers = append(allIdentifiers, ids...)
 		}
@@ -206,14 +204,14 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	if stmt.Where != nil {
 		ids, err := identifiersInExpression(stmt.Where)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
 	for _, orderBy := range stmt.OrderBy {
 		ids, err := identifiersInExpression(orderBy.Expression)
 		if err != nil {
-			return newError(err.Error())
+			return err
 		}
 		allIdentifiers = append(allIdentifiers, ids...)
 	}
@@ -249,10 +247,10 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 				}
 			}
 			if alias, ok := tableToAlias[id.Table]; missingFrom && ok {
-				return newError(`invalid reference to FROM-clause entry for table "%s". Perhaps you meant to reference the table alias "%s"`, id.Table, alias)
+				return fmt.Errorf(`invalid reference to FROM-clause entry for table "%s". Perhaps you meant to reference the table alias "%s"`, id.Table, alias)
 			}
 			if missingFrom {
-				return newError(`missing FROM-clause entry for table "%s"`, id.Table)
+				return fmt.Errorf(`missing FROM-clause entry for table "%s"`, id.Table)
 			}
 		}
 	}
@@ -261,13 +259,13 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	for _, identifier := range allIdentifiers {
 		tables, ok := columns[identifier.Value]
 		if !ok {
-			return newError(`column "%s" does not exist`, identifier.Value)
+			return fmt.Errorf(`column "%s" does not exist`, identifier.Value)
 		}
 		if identifier.Table != "" {
 			continue
 		}
 		if len(tables) > 1 {
-			return newError(`column reference "%s" is ambiguous`, identifier.Value)
+			return fmt.Errorf(`column reference "%s" is ambiguous`, identifier.Value)
 		}
 		var table string
 		for t := range tables {
@@ -275,46 +273,56 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		}
 		identifier.Table = table
 	}
+	return nil
+}
+
+func join(backend Backend, rows []object.Row, table string, predicate ast.Expression) ([]object.Row, error) {
+	r, err := backend.Rows(table)
+	if err != nil {
+		return nil, err
+	}
+	var newRows []object.Row
+	for _, row1 := range rows {
+		for _, row2 := range r {
+			newRow := concatenateRows(row1, row2)
+			if predicate != nil {
+				v := evalExpression(newRow, predicate)
+				if isError(v) {
+					return nil, fmt.Errorf(v.Inspect())
+				}
+				include, ok := v.(*object.Boolean)
+				if !ok {
+					return nil, fmt.Errorf("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
+				}
+				if !include.Value {
+					continue
+				}
+			}
+			newRows = append(newRows, newRow)
+		}
+	}
+	return newRows, nil
+}
+
+func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
+	// Traverse AST to get all column identifiers and normalize them
+	if err := normalizeIdentifiers(backend, stmt); err != nil {
+		return newError(err.Error())
+	}
 
 	// fetch rows
 	rows := []object.Row{{}}
+	var err error
 	for _, from := range stmt.From {
-		r, err := backend.Rows(from.Table)
+		rows, err = join(backend, rows, from.Table, nil)
 		if err != nil {
 			return newError(err.Error())
 		}
-		var newRows []object.Row
-		for _, row1 := range rows {
-			for _, row2 := range r {
-				newRow := concatenateRows(row1, row2)
-				newRows = append(newRows, newRow)
-			}
-		}
-		rows = newRows
 		if from.Join != nil {
-			newRows = []object.Row{}
-			r, err = backend.Rows(from.Join.With.Table)
+			rows, err = join(backend, rows, from.Join.With.Table, from.Join.Predicate)
 			if err != nil {
 				return newError(err.Error())
 			}
-			for _, row1 := range rows {
-				for _, row2 := range r {
-					newRow := concatenateRows(row1, row2)
-					v := evalExpression(newRow, from.Join.Predicate)
-					if isError(v) {
-						return v
-					}
-					include, ok := v.(*object.Boolean)
-					if !ok {
-						return newError("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
-					}
-					if !include.Value {
-						continue
-					}
-					newRows = append(newRows, newRow)
-				}
-			}
-			rows = newRows
 		}
 	}
 
@@ -356,12 +364,6 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		}
 		rowsToReturn = append(rowsToReturn, row)
 	}
-	// Populate aliases
-	for i, alias := range stmt.Aliases {
-		if alias == "" {
-			aliases[i] = stmt.Expressions[i].String()
-		}
-	}
 	// Sort
 	if len(stmt.OrderBy) != 0 {
 		sortRows(rowsToReturn)
@@ -382,6 +384,12 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		}
 		rowsToReturn = rowsToReturn[offset:end]
 	}
+	// Populate aliases
+	for i, alias := range stmt.Aliases {
+		if alias == "" {
+			aliases[i] = stmt.Expressions[i].String()
+		}
+	}
 	result := &object.Result{
 		Aliases: aliases,
 		Rows:    rowsToReturn,
@@ -393,7 +401,7 @@ func sortRows(rows []*object.Row) {
 	if len(rows) == 0 {
 		return
 	}
-	n := len(rows[0].SortByValues) // must be same length for all rows
+	n := len(rows[0].SortByValues) // we know this is same length for all rows
 	sort.Slice(rows, func(i, j int) bool {
 		for k := 0; k < n; k++ {
 			sign := float64(1)
@@ -426,13 +434,14 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
 	columns := backend.Columns(is.TableName)
-	for _, rowToInsert := range is.Rows {
+	rowsToInsert := make([]object.Row, len(is.Rows))
+	for i, rowToInsert := range is.Rows {
 		if len(columns) != len(rowToInsert) {
 			var columnsPlural, valuesPlural string
 			if len(columns) > 1 {
 				columnsPlural = "s"
 			}
-			if len(is.Rows[0]) > 1 {
+			if len(rowToInsert) > 1 {
 				valuesPlural = "s"
 			}
 			return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(rowToInsert), valuesPlural)
@@ -444,6 +453,9 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 		}
 		for i, es := range rowToInsert {
 			obj := Eval(backend, es)
+			if errorObj, ok := obj.(*object.Error); ok {
+				return errorObj
+			}
 			row.Values[i] = obj
 			row.TableName[i] = is.TableName
 		}
@@ -454,6 +466,9 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 				return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
 			}
 		}
+		rowsToInsert[i] = row
+	}
+	for _, row := range rowsToInsert {
 		if err := backend.Insert(is.TableName, row); err != nil {
 			return newError(err.Error())
 		}
