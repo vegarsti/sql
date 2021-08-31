@@ -364,12 +364,6 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 		}
 		rowsToReturn = append(rowsToReturn, row)
 	}
-	// Populate aliases
-	for i, alias := range stmt.Aliases {
-		if alias == "" {
-			aliases[i] = stmt.Expressions[i].String()
-		}
-	}
 	// Sort
 	if len(stmt.OrderBy) != 0 {
 		sortRows(rowsToReturn)
@@ -389,6 +383,12 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 			end = 0
 		}
 		rowsToReturn = rowsToReturn[offset:end]
+	}
+	// Populate aliases
+	for i, alias := range stmt.Aliases {
+		if alias == "" {
+			aliases[i] = stmt.Expressions[i].String()
+		}
 	}
 	result := &object.Result{
 		Aliases: aliases,
