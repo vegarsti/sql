@@ -159,20 +159,20 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 			if _, ok := columns[c]; !ok {
 				columns[c] = make(map[string]bool)
 			}
-			columns[c][table] = true
+			columns[c][from.Table] = true
 		}
 		if from.Join != nil {
 			table := from.Join.With.Table
 			if from.Join.With.TableAlias != "" {
 				table = from.Join.With.TableAlias
-				tableToAlias[from.TableAlias] = from.Table
+				tableToAlias[from.Join.With.Table] = from.Join.With.TableAlias
 			}
 			tableReferences[table]++
 			for _, c := range backend.Columns(from.Join.With.Table) {
 				if _, ok := columns[c]; !ok {
 					columns[c] = make(map[string]bool)
 				}
-				columns[c][table] = true
+				columns[c][from.Join.With.Table] = true
 			}
 		}
 	}
@@ -258,7 +258,7 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 	// populate column identifiers with which table the column belongs to, and fail if ambiguous or non-existent
 	for _, identifier := range allIdentifiers {
 		tables, ok := columns[identifier.Value]
-		if !ok {
+		if !ok || len(tables) == 0 {
 			return fmt.Errorf(`column "%s" does not exist`, identifier.Value)
 		}
 		if identifier.Table != "" {
@@ -267,11 +267,17 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 		if len(tables) > 1 {
 			return fmt.Errorf(`column reference "%s" is ambiguous`, identifier.Value)
 		}
-		var table string
-		for t := range tables {
-			table = t
+		if identifier.Table != "" {
+			continue
 		}
-		identifier.Table = table
+
+		// we now know:
+		// - the column identifier is unqualified, so identifier.Table is empty: ""
+		// - exactly one table has this column
+		// - that table is the only key in the `tables` map
+		for t := range tables {
+			identifier.Table = t
+		}
 	}
 	return nil
 }
