@@ -18,19 +18,19 @@ name     first_appeared
 >> select 1, 3.14 as pi, '✅' as emoji, 'Vegard' as name
 1 pi       emoji name
 1 3.140000 '✅'   'Vegard'
->> create table nums (n int)
-OK
->> insert into nums values (1), (2), (3)
-OK
->> create table squares (n int, s int)
+>> create table squares (number int, square int)
 OK
 >> insert into squares values (1, 1), (2, 4), (3, 9)
 OK
->> select nums.n, squares.s from nums join squares on nums.n = squares.n
-n s
-1 1
-2 4
-3 9
+>> create table cubes (number int, cube int)
+OK
+>> insert into cubes values (1, 1), (2, 8), (3, 27)
+OK
+>> select s.number, s.square, c.cube from squares s join cubes c on s.number = c.number
+number square cube
+1      1      1
+2      4      8
+3      9      27
 ```
 
 Based on Thorsten Ball's excellent [Writing an Interpreter in Go](https://interpreterbook.com/).
