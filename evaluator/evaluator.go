@@ -276,51 +276,53 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 	return nil
 }
 
+func join(backend Backend, rows []object.Row, table string, predicate ast.Expression) ([]object.Row, error) {
+	r, err := backend.Rows(table)
+	if err != nil {
+		return nil, err
+	}
+	var newRows []object.Row
+	for _, row1 := range rows {
+		for _, row2 := range r {
+			newRow := concatenateRows(row1, row2)
+			if predicate != nil {
+				v := evalExpression(newRow, predicate)
+				if isError(v) {
+					return nil, fmt.Errorf(v.Inspect())
+				}
+				include, ok := v.(*object.Boolean)
+				if !ok {
+					return nil, fmt.Errorf("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
+				}
+				if !include.Value {
+					continue
+				}
+			}
+			newRows = append(newRows, newRow)
+		}
+	}
+	return newRows, nil
+}
+
 func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Object {
-	// Traverse AST and get all column identifiers and normalize them
+	// Traverse AST to get all column identifiers and normalize them
 	if err := normalizeIdentifiers(backend, stmt); err != nil {
 		return newError(err.Error())
 	}
 
 	// fetch rows
 	rows := []object.Row{{}}
+	var err error
 	for _, from := range stmt.From {
-		r, err := backend.Rows(from.Table)
+		rows, err = join(backend, rows, from.Table, nil)
 		if err != nil {
 			return newError(err.Error())
 		}
-		var newRows []object.Row
-		for _, row1 := range rows {
-			for _, row2 := range r {
-				newRow := concatenateRows(row1, row2)
-				newRows = append(newRows, newRow)
-			}
-		}
-		rows = newRows
 		if from.Join != nil {
-			newRows = []object.Row{}
-			r, err = backend.Rows(from.Join.With.Table)
+			rows, err = join(backend, rows, from.Join.With.Table, from.Join.Predicate)
 			if err != nil {
 				return newError(err.Error())
 			}
-			for _, row1 := range rows {
-				for _, row2 := range r {
-					newRow := concatenateRows(row1, row2)
-					v := evalExpression(newRow, from.Join.Predicate)
-					if isError(v) {
-						return v
-					}
-					include, ok := v.(*object.Boolean)
-					if !ok {
-						return newError("join condition must be of type boolean, not %s: %s", v.Type(), v.Inspect())
-					}
-					if !include.Value {
-						continue
-					}
-					newRows = append(newRows, newRow)
-				}
-			}
-			rows = newRows
 		}
 	}
 
