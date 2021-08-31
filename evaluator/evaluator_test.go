@@ -710,6 +710,108 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a, a",
 		},
 		{
+			"select f.a, b.a, c from foo f join bar b on true",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+						&object.String{Value: "2"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+						&object.String{Value: "2"},
+					},
+				},
+			},
+			"a, a, c",
+		},
+		{
+			"select f.a, b.a, c from bar b join foo f on true",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+						&object.String{Value: "2"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+						&object.String{Value: "2"},
+					},
+				},
+			},
+			"a, a, c",
+		},
+		{
+			"select f.a, b.a, c from bar b, foo f",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+						&object.String{Value: "2"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+						&object.String{Value: "1"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+						&object.String{Value: "2"},
+					},
+				},
+			},
+			"a, a, c",
+		},
+		{
 			"select b from foo order by b",
 			[]object.Row{
 				{
@@ -813,14 +915,14 @@ func TestEvalSelectFrom(t *testing.T) {
 		backend.tables["foo"] = []object.Column{
 			{Name: "a", Type: object.STRING},
 			{Name: "b", Type: object.STRING},
-			{Name: "c", Type: object.INTEGER},
+			{Name: "c", Type: object.STRING},
 		}
 		backend.rows["foo"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "abc"},
 					&object.String{Value: "efg"},
-					&object.Integer{Value: 1},
+					&object.String{Value: "1"},
 				},
 				Aliases:   []string{"a", "b", "c"},
 				TableName: []string{"foo", "foo", "foo"},
@@ -829,7 +931,7 @@ func TestEvalSelectFrom(t *testing.T) {
 				Values: []object.Object{
 					&object.String{Value: "bcd"},
 					&object.String{Value: "def"},
-					&object.Integer{Value: 2},
+					&object.String{Value: "2"},
 				},
 				Aliases:   []string{"a", "b", "c"},
 				TableName: []string{"foo", "foo", "foo"},
@@ -875,12 +977,12 @@ func TestEvalSelectFrom(t *testing.T) {
 		}
 		for i, gotRow := range result.Rows {
 			if gotRow.Inspect() != tt.expected[i].Inspect() {
-				t.Fatalf("expected row to be %s. got=%s", tt.expected[i].Inspect(), gotRow.Inspect())
+				t.Fatalf("%s: expected row %d to be %s. got=%s", tt.input, i, tt.expected[i].Inspect(), gotRow.Inspect())
 			}
 		}
 		gotAliases := strings.Join(result.Aliases, ", ")
 		if gotAliases != tt.expectedAliases {
-			t.Fatalf("expected aliases %s. got=%s", tt.expectedAliases, gotAliases)
+			t.Fatalf("expected aliases '%s'. got='%s'", tt.expectedAliases, gotAliases)
 		}
 	}
 }

@@ -26,7 +26,7 @@ OK
 OK
 >> insert into cubes values (1, 1), (2, 8), (3, 27)
 OK
->> select s.number, s.square, c.cube from squares s join cubes c on s.number = c.number
+>> select s.number, square, cube from squares s join cubes c on s.number = c.number
 number square cube
 1      1      1
 2      4      8
