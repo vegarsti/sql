@@ -161,7 +161,7 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 			}
 			columns[c][from.Table] = true
 		}
-		if from.Join != nil {
+		for from.Join != nil {
 			table := from.Join.With.Table
 			if from.Join.With.TableAlias != "" {
 				table = from.Join.With.TableAlias
@@ -174,6 +174,7 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 				}
 				columns[c][from.Join.With.Table] = true
 			}
+			from = from.Join.With
 		}
 	}
 
@@ -233,7 +234,7 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 					missingFrom = false
 					id.Table = from.Table
 				}
-				if from.Join != nil {
+				for from.Join != nil {
 					// alias not provided
 					if from.Join.With.TableAlias == "" && id.Table == from.Join.With.Table {
 						missingFrom = false
@@ -244,6 +245,7 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 						missingFrom = false
 						id.Table = from.Join.With.Table
 					}
+					from = from.Join.With
 				}
 			}
 			if alias, ok := tableToAlias[id.Table]; missingFrom && ok {
@@ -320,15 +322,20 @@ func evalSelectStatement(backend Backend, stmt *ast.SelectStatement) object.Obje
 	rows := []object.Row{{}}
 	var err error
 	for _, from := range stmt.From {
+		// cartesian join with existing rows
+		// if first FROM, this just returns the rows from that table
 		rows, err = join(backend, rows, from.Table, nil)
 		if err != nil {
 			return newError(err.Error())
 		}
-		if from.Join != nil {
+
+		// do all joins, left to right
+		for from.Join != nil {
 			rows, err = join(backend, rows, from.Join.With.Table, from.Join.Predicate)
 			if err != nil {
 				return newError(err.Error())
 			}
+			from = from.Join.With
 		}
 	}
 
