@@ -778,6 +778,44 @@ func TestEvalSelectFrom(t *testing.T) {
 			"a, a, c",
 		},
 		{
+			"select f.a, b.a, c, x from bar b join foo f on true join baz on true",
+			[]object.Row{
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "m"},
+						&object.String{Value: "1"},
+						&object.String{Value: "x"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "m"},
+						&object.String{Value: "2"},
+						&object.String{Value: "x"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "abc"},
+						&object.String{Value: "n"},
+						&object.String{Value: "1"},
+						&object.String{Value: "x"},
+					},
+				},
+				{
+					Values: []object.Object{
+						&object.String{Value: "bcd"},
+						&object.String{Value: "n"},
+						&object.String{Value: "2"},
+						&object.String{Value: "x"},
+					},
+				},
+			},
+			"a, a, c, x",
+		},
+		{
 			"select f.a, b.a, c from bar b, foo f",
 			[]object.Row{
 				{
@@ -960,6 +998,21 @@ func TestEvalSelectFrom(t *testing.T) {
 			},
 		}
 		backend.columns["bar"] = []string{"a"}
+
+		// table `baz`
+		backend.tables["baz"] = []object.Column{
+			{Name: "x", Type: object.STRING},
+		}
+		backend.rows["baz"] = []object.Row{
+			{
+				Values: []object.Object{
+					&object.String{Value: "x"},
+				},
+				Aliases:   []string{"x"},
+				TableName: []string{"baz"},
+			},
+		}
+		backend.columns["baz"] = []string{"x"}
 
 		evaluated := testEval(backend, tt.input)
 		result, ok := evaluated.(*object.Result)
