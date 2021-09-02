@@ -304,6 +304,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"select 5 - 5", 5, "-", 5},
 		{"select 5 * 5", 5, "*", 5},
 		{"select 5 / 5", 5, "/", 5},
+		{"select 5 % 5", 5, "%", 5},
+		{"select 5 ^ 5", 5, "^", 5},
 	}
 	for _, tt := range infixTests {
 		l := lexer.New(tt.input)
