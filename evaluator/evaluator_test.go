@@ -37,6 +37,8 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"select 7 % 2", 1},
 		{"select 5 ^ 2", 25},
 		{"select 2*5^2+1", 51},
+		{"select 1 / 2", 0},
+		{"select 1 / 1", 1},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
@@ -178,8 +180,6 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"select 0.", 0},
 		{"select 1 * 3.14", 3.14},
 		{"select 3.14 * 1", 3.14},
-		{"select 1 / 2", 0.5},
-		{"select 1 / 1", 1},
 		{"select 5.0 ^ 2.0", 25.0},
 		{"select 4.8 % 2", 0.8},
 	}
