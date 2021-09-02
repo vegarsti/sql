@@ -32,6 +32,8 @@ const (
 	GREATERTHAN         = ">"
 	GREATERTHANOREQUALS = ">="
 	DOUBLEBAR           = "||"
+	HAT                 = "^"
+	PERCENT             = "%"
 
 	// Keywords
 	SELECT = "SELECT"

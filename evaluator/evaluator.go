@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/vegarsti/sql/ast"
@@ -595,6 +596,10 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return &object.Boolean{Value: leftVal < rightVal}
 	case "<=":
 		return &object.Boolean{Value: leftVal <= rightVal}
+	case "^":
+		return &object.Integer{Value: int64(math.Pow(float64(leftVal), float64(rightVal)))}
+	case "%":
+		return &object.Integer{Value: leftVal % rightVal}
 	default:
 		return newError("unknown integer operator: %s %s %s", left.Type(), operator, right.Type())
 	}
@@ -625,6 +630,10 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		return &object.Boolean{Value: leftVal < rightVal}
 	case "<=":
 		return &object.Boolean{Value: leftVal <= rightVal}
+	case "^":
+		return &object.Float{Value: math.Pow(leftVal, rightVal)}
+	case "%":
+		return &object.Float{Value: math.Mod(leftVal, rightVal)}
 	default:
 		return newError("unknown float operator: %s %s %s", left.Type(), operator, right.Type())
 	}
