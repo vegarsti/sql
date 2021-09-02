@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/chzyer/readline"
@@ -13,11 +15,15 @@ import (
 	"github.com/vegarsti/sql/parser"
 )
 
-const PROMPT = ">> "
+func RunInteractive(backend evaluator.Backend) {
+	r, err := readline.New(">> ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "readline.New(): %v", err)
+		os.Exit(1)
+	}
+	defer r.Close()
 
-func Start(r *readline.Instance) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	backend := newTestBackend()
 
 	for {
 		line, err := r.Readline()
@@ -32,7 +38,6 @@ func Start(r *readline.Instance) {
 		}
 		l := lexer.New(line)
 		p := parser.New(l)
-
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			printParserErrors(os.Stdout, p.Errors())
@@ -48,6 +53,23 @@ func Start(r *readline.Instance) {
 	}
 }
 
+func RunScript(backend evaluator.Backend, input string) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		printParserErrors(os.Stdout, p.Errors())
+		return
+	}
+	evaluated := evaluator.Eval(backend, program)
+	if evaluated != nil {
+		w.Write([]byte(evaluated.Inspect()))
+		w.Write([]byte("\n"))
+	}
+	w.Flush()
+}
+
 func printParserErrors(out io.Writer, errors []string) {
 	for _, msg := range errors {
 		io.WriteString(out, "ERROR: "+msg+"\n")
@@ -55,12 +77,25 @@ func printParserErrors(out io.Writer, errors []string) {
 }
 
 func main() {
-	r, err := readline.New(">> ")
+	fi, err := os.Stdin.Stat()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "os.Stdin.Stat(): %v", err)
+		os.Exit(1)
 	}
-	defer r.Close()
-	Start(r)
+	backend := newTestBackend()
+	receivedInputFromStdin := (fi.Mode() & os.ModeCharDevice) == 0
+	if receivedInputFromStdin {
+		s := bufio.NewScanner(os.Stdin)
+		var lines []string
+		for s.Scan() {
+			line := s.Text()
+			lines = append(lines, line)
+		}
+		input := strings.Join(lines, " ")
+		RunScript(backend, input)
+		return
+	}
+	RunInteractive(backend)
 }
 
 type testBackend struct {

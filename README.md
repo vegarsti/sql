@@ -4,6 +4,8 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/vegarsti/sql)](https://goreportcard.com/report/github.com/vegarsti/sql)
 
+The interpreter can be run interactively.
+
 ```
 $ go run cmd/sql/main.go
 >> create table programming_languages (name text, first_appeared integer);
@@ -31,6 +33,17 @@ number square cube
 1      1      1
 2      4      8
 3      9      27
+```
+
+The interpreter also supports running against standard input.
+
+```
+$ cat example.sql | go run cmd/sql/main.go
+name     first_appeared
+'C'      1972
+'Python' 1990
+'Lisp'   1958
+'Go'     2009
 ```
 
 Based on Thorsten Ball's excellent [Writing an Interpreter in Go](https://interpreterbook.com/).
