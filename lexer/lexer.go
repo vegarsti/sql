@@ -82,6 +82,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '=':
 		tok = newToken(token.EQUALS, l.ch)
+	case '^':
+		tok = newToken(token.HAT, l.ch)
+	case '%':
+		tok = newToken(token.PERCENT, l.ch)
 	case '>':
 		if l.input[l.position+1] == '=' {
 			tok = token.Token{Type: token.GREATERTHANOREQUALS, Literal: ">="}
