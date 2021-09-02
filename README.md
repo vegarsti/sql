@@ -20,11 +20,11 @@ name     first_appeared
 1 3.140000 '✅'   'Vegard'
 >> create table squares (number int, square int)
 OK
->> insert into squares values (1, 1), (2, 4), (3, 9)
+>> insert into squares values (1, 1), (2, 2^2), (3, 3^2)
 OK
 >> create table cubes (number int, cube int)
 OK
->> insert into cubes values (1, 1), (2, 8), (3, 27)
+>> insert into cubes values (1, 1), (2, 2^3), (3, 3^3)
 OK
 >> select s.number, square, cube from squares s join cubes c on s.number = c.number
 number square cube
