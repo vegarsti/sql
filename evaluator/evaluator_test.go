@@ -2,6 +2,7 @@ package evaluator_test
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -33,6 +34,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"select 3 * 3 * 3 + 10", 37},
 		{"select 3 * (3 * 3) + 10", 37},
 		{"select (5 + 10 * 2 + 15 * 3) * 2 + -10", 130},
+		{"select 7 % 2", 1},
 		{"select 5 ^ 2", 25},
 		{"select 2*5^2+1", 51},
 	}
@@ -179,6 +181,7 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"select 1 / 2", 0.5},
 		{"select 1 / 1", 1},
 		{"select 5.0 ^ 2.0", 25.0},
+		{"select 4.8 % 2", 0.8},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(newTestBackend(), tt.input)
@@ -203,7 +206,7 @@ func testFloatObject(t *testing.T, obj object.Object, expected float64) bool {
 		t.Errorf("object is not Float. got=%T (%+v)", obj, obj)
 		return false
 	}
-	if result.Value != expected {
+	if math.Abs(result.Value-expected) > 0.01 {
 		t.Errorf("object has wrong value. got=%f, want=%f", result.Value, expected)
 		return false
 	}
