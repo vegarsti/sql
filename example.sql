@@ -3,3 +3,4 @@ insert into programming_languages values ('C', 1972);
 insert into programming_languages values ('Python', 1990);
 insert into programming_languages values ('Lisp', 1958);
 insert into programming_languages values ('Go', 2009);
+select name, first_appeared from programming_languages;
