@@ -13,8 +13,7 @@ type Backend interface {
 	CreateTable(string, []object.Column) error
 	Insert(string, object.Row) error
 	Rows(string) ([]object.Row, error)
-	Columns(string) []string
-	ColumnTypes(string) []object.DataType
+	Columns(string) ([]object.Column, error)
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {
@@ -156,11 +155,15 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 			tableToAlias[from.Table] = from.TableAlias
 		}
 		tableReferences[table]++
-		for _, c := range backend.Columns(from.Table) {
-			if _, ok := columns[c]; !ok {
-				columns[c] = make(map[string]bool)
+		backendColumns, err := backend.Columns(from.Table)
+		if err != nil {
+			return fmt.Errorf("columns: %w", err)
+		}
+		for _, c := range backendColumns {
+			if _, ok := columns[c.Name]; !ok {
+				columns[c.Name] = make(map[string]bool)
 			}
-			columns[c][from.Table] = true
+			columns[c.Name][from.Table] = true
 		}
 		for from.Join != nil {
 			table := from.Join.With.Table
@@ -169,11 +172,15 @@ func normalizeIdentifiers(backend Backend, stmt *ast.SelectStatement) error {
 				tableToAlias[from.Join.With.Table] = from.Join.With.TableAlias
 			}
 			tableReferences[table]++
-			for _, c := range backend.Columns(from.Join.With.Table) {
-				if _, ok := columns[c]; !ok {
-					columns[c] = make(map[string]bool)
+			backendColumns, err := backend.Columns(from.Join.With.Table)
+			if err != nil {
+				return fmt.Errorf("columns: %w", err)
+			}
+			for _, c := range backendColumns {
+				if _, ok := columns[c.Name]; !ok {
+					columns[c.Name] = make(map[string]bool)
 				}
-				columns[c][from.Join.With.Table] = true
+				columns[c.Name][from.Join.With.Table] = true
 			}
 			from = from.Join.With
 		}
@@ -447,7 +454,10 @@ func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) ob
 }
 
 func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object {
-	columns := backend.Columns(is.TableName)
+	columns, err := backend.Columns(is.TableName)
+	if err != nil {
+		return newError(err.Error())
+	}
 	rowsToInsert := make([]object.Row, len(is.Rows))
 	for i, rowToInsert := range is.Rows {
 		if len(columns) != len(rowToInsert) {
@@ -460,10 +470,16 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 			}
 			return newError(`table "%s" has %d column%s but %d value%s were supplied`, is.TableName, len(columns), columnsPlural, len(rowToInsert), valuesPlural)
 		}
+		columnNames := make([]string, len(columns))
+		columnTypes := make([]object.DataType, len(columns))
+		for i, c := range columns {
+			columnNames[i] = c.Name
+			columnTypes[i] = c.Type
+		}
 		row := object.Row{
 			Values:    make([]object.Object, len(rowToInsert)),
 			TableName: make([]string, len(rowToInsert)),
-			Aliases:   columns,
+			Aliases:   columnNames,
 		}
 		for i, es := range rowToInsert {
 			obj := Eval(backend, es)
@@ -473,10 +489,16 @@ func evalInsertStatement(backend Backend, is *ast.InsertStatement) object.Object
 			row.Values[i] = obj
 			row.TableName[i] = is.TableName
 		}
-		columnTypes := backend.ColumnTypes(is.TableName)
+		if err != nil {
+			return newError(err.Error())
+		}
 		for i, value := range row.Values {
 			t := value.Type()
-			if object.DataType(string(t)) != columnTypes[i] {
+			columnType := object.DataTypeFromString(string(t))
+			if columnType == "" {
+				panic(fmt.Sprintf("invalid column type '%s'", t))
+			}
+			if columnType != columnTypes[i] {
 				return newError(`cannot insert %s with value %s in %s column in table "%s"`, t, value.Inspect(), columnTypes[i], is.TableName)
 			}
 		}
