@@ -14,6 +14,8 @@ type Backend interface {
 	Insert(string, object.Row) error
 	Rows(string) ([]object.Row, error)
 	Columns(string) ([]object.Column, error)
+	Open() error
+	Close() error
 }
 
 func Eval(backend Backend, node ast.Node) object.Object {

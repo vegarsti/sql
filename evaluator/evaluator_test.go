@@ -372,6 +372,14 @@ type testBackend struct {
 	rows   map[string][]object.Row
 }
 
+func (tb *testBackend) Open() error {
+	return nil
+}
+
+func (tb *testBackend) Close() error {
+	return nil
+}
+
 func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
 	if _, ok := tb.tables[name]; ok {
 		return fmt.Errorf(`relation "%s" already exists`, name)
