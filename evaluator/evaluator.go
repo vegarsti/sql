@@ -444,9 +444,13 @@ func sortRows(rows []*object.Row) {
 func evalCreateTableStatement(backend Backend, cst *ast.CreateTableStatement) object.Object {
 	columns := make([]object.Column, len(cst.ColumnNames))
 	for i := range cst.ColumnNames {
+		columnType := object.DataTypeFromString(cst.ColumnTypes[i].Literal)
+		if columnType == "" {
+			panic(fmt.Sprintf("invalid data type %s", cst.ColumnTypes[i].Literal))
+		}
 		columns[i] = object.Column{
 			Name: cst.ColumnNames[i],
-			Type: object.DataType(cst.ColumnTypes[i].Literal), // This should always be valid since it has parsed successfully
+			Type: columnType,
 		}
 	}
 	if err := backend.CreateTable(cst.Name, columns); err != nil {
