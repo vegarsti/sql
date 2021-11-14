@@ -77,7 +77,23 @@ const (
 	STRING  = "STRING"
 	INTEGER = "INTEGER"
 	FLOAT   = "FLOAT"
+	BOOLEAN = "BOOLEAN"
 )
+
+func DataTypeFromString(s string) DataType {
+	switch s {
+	case "TEXT", "STRING":
+		return STRING
+	case "FLOAT", "DOUBLE":
+		return FLOAT
+	case "INT", "INTEGER":
+		return INTEGER
+	case "BOOL", "BOOLEAN":
+		return BOOLEAN
+	default:
+		return ""
+	}
+}
 
 type Table struct {
 	Name    string
