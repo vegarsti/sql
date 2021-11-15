@@ -10,8 +10,8 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/vegarsti/sql/evaluator"
+	"github.com/vegarsti/sql/inmemory"
 	"github.com/vegarsti/sql/lexer"
-	"github.com/vegarsti/sql/object"
 	"github.com/vegarsti/sql/parser"
 )
 
@@ -82,7 +82,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "os.Stdin.Stat(): %v", err)
 		os.Exit(1)
 	}
-	backend := newTestBackend()
+	backend := inmemory.NewBackend()
 	receivedInputFromStdin := (fi.Mode() & os.ModeCharDevice) == 0
 	if receivedInputFromStdin {
 		s := bufio.NewScanner(os.Stdin)
@@ -96,60 +96,4 @@ func main() {
 		return
 	}
 	RunInteractive(backend)
-}
-
-type testBackend struct {
-	tables map[string][]object.Column
-	rows   map[string][]object.Row
-}
-
-func (tb *testBackend) Open() error {
-	return nil
-}
-
-func (tb *testBackend) Close() error {
-	return nil
-}
-
-func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
-	if _, ok := tb.tables[name]; ok {
-		return fmt.Errorf(`relation "%s" already exists`, name)
-	}
-	tb.tables[name] = columns
-	tb.rows[name] = make([]object.Row, 0)
-	return nil
-}
-
-func (tb *testBackend) Insert(name string, row object.Row) error {
-	if _, ok := tb.tables[name]; !ok {
-		return fmt.Errorf(`relation "%s" does not exist`, name)
-	}
-	tb.rows[name] = append(tb.rows[name], row)
-	// Populate aliases
-	for i := range tb.rows[name] {
-		tb.rows[name][i].Aliases = make([]string, len(tb.tables[name]))
-		for j, column := range tb.tables[name] {
-			tb.rows[name][i].Aliases[j] = column.Name
-		}
-	}
-	return nil
-}
-
-func (tb *testBackend) Rows(name string) ([]object.Row, error) {
-	rows, ok := tb.rows[name]
-	if !ok {
-		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
-	}
-	return rows, nil
-}
-
-func (tb *testBackend) Columns(name string) ([]object.Column, error) {
-	return tb.tables[name], nil
-}
-
-func newTestBackend() *testBackend {
-	return &testBackend{
-		tables: make(map[string][]object.Column),
-		rows:   make(map[string][]object.Row),
-	}
 }
