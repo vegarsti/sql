@@ -68,7 +68,6 @@ func (b *Backend) CreateTable(tableName string, columns []object.Column) error {
 // The n'th row is stored with the byte representation of n as its key, and
 // the bytes stored contain the marshalled JSON representation of the `object.Row`.
 func (b *Backend) Insert(tableName string, row object.Row) error {
-	// Create a bucket for this table and insert columns as JSON
 	if err := b.db.Update(func(tx *bolt.Tx) error {
 		tableBucketName := []byte(tableName)
 		bucket := tx.Bucket(tableBucketName)
