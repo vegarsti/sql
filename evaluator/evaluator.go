@@ -424,7 +424,7 @@ func sortRows(rows []*object.Row) {
 	if len(rows) == 0 {
 		return
 	}
-	n := len(rows[0].SortByValues) // we know this is same length for all rows
+	n := len(rows[0].SortByValues) // we know this is same length for all rows (check and panic if not?)
 	sort.Slice(rows, func(i, j int) bool {
 		for k := 0; k < n; k++ {
 			sign := float64(1)

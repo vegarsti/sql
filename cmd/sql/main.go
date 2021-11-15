@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/chzyer/readline"
+	"github.com/vegarsti/sql/bolt"
 	"github.com/vegarsti/sql/evaluator"
 	"github.com/vegarsti/sql/inmemory"
 	"github.com/vegarsti/sql/lexer"
@@ -82,7 +83,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "os.Stdin.Stat(): %v", err)
 		os.Exit(1)
 	}
-	backend := inmemory.NewBackend()
+	if len(os.Args) > 2 {
+		fmt.Fprintf(os.Stderr, "usage: sql [database file]", err)
+		os.Exit(1)
+	}
+	var backend evaluator.Backend
+	if len(os.Args) == 1 {
+		backend = inmemory.NewBackend()
+	}
+	if len(os.Args) == 2 {
+		backend = bolt.NewBackend(os.Args[1])
+	}
+	if err := backend.Open(); err != nil {
+		fmt.Fprintf(os.Stderr, "backend open: %v", err)
+		os.Exit(1)
+	}
 	receivedInputFromStdin := (fi.Mode() & os.ModeCharDevice) == 0
 	if receivedInputFromStdin {
 		s := bufio.NewScanner(os.Stdin)
@@ -93,7 +108,11 @@ func main() {
 		}
 		input := strings.Join(lines, " ")
 		RunScript(backend, input)
-		return
+	} else {
+		RunInteractive(backend)
 	}
-	RunInteractive(backend)
+	if err := backend.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "backend close: %v", err)
+		os.Exit(1)
+	}
 }
