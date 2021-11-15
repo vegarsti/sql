@@ -1,13 +1,13 @@
 package evaluator_test
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/vegarsti/sql/evaluator"
+	"github.com/vegarsti/sql/inmemory"
 	"github.com/vegarsti/sql/lexer"
 	"github.com/vegarsti/sql/object"
 	"github.com/vegarsti/sql/parser"
@@ -41,7 +41,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"select 1 / 1", 1},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
@@ -96,7 +96,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"select 1 is not null", true},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
@@ -123,7 +123,7 @@ func TestEvalNullExpression(t *testing.T) {
 		{"select null", object.NULL},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			if errorEvaluated, errorOK := evaluated.(*object.Error); errorOK {
@@ -150,7 +150,7 @@ func testNull(t *testing.T, obj object.Object) bool {
 	return true
 }
 
-func testEval(backend *testBackend, input string) object.Object {
+func testEval(backend *inmemory.Backend, input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -184,7 +184,7 @@ func TestEvalFloatExpression(t *testing.T) {
 		{"select 4.8 % 2", 0.8},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			t.Fatalf("object is not Result. got=%T", evaluated)
@@ -225,7 +225,7 @@ func TestEvalStringExpression(t *testing.T) {
 		{"select 'hello' || 'world'", "helloworld"},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			t.Fatalf("object is not Result. got=%T", evaluated)
@@ -272,14 +272,14 @@ func TestErrors(t *testing.T) {
 		{"insert into foo values (1, 2)", `cannot insert INTEGER with value 1 in STRING column in table "foo"`},
 	}
 	for _, tt := range tests {
-		backend := newTestBackend()
+		backend := inmemory.NewBackend()
 
 		// table `foo`
-		backend.tables["foo"] = []object.Column{
+		backend.Tables["foo"] = []object.Column{
 			{Name: "a", Type: object.STRING},
 			{Name: "c", Type: object.INTEGER},
 		}
-		backend.rows["foo"] = []object.Row{
+		backend.Tuples["foo"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "abc"},
@@ -299,7 +299,7 @@ func TestErrors(t *testing.T) {
 		}
 
 		// table `bar`
-		backend.tables["bar"] = []object.Column{{Name: "a", Type: object.STRING}}
+		backend.Tables["bar"] = []object.Column{{Name: "a", Type: object.STRING}}
 
 		evaluated := testEval(backend, tt.input)
 		testError(t, evaluated, tt.expectedErrorMessage)
@@ -332,7 +332,7 @@ func TestEvalSelectMultiple(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		evaluated := testEval(newTestBackend(), tt.input)
+		evaluated := testEval(inmemory.NewBackend(), tt.input)
 		result, ok := evaluated.(*object.Result)
 		if !ok {
 			t.Fatalf("object is not Result. got=%T", evaluated)
@@ -367,62 +367,6 @@ func TestEvalSelectMultiple(t *testing.T) {
 	}
 }
 
-type testBackend struct {
-	tables map[string][]object.Column
-	rows   map[string][]object.Row
-}
-
-func (tb *testBackend) Open() error {
-	return nil
-}
-
-func (tb *testBackend) Close() error {
-	return nil
-}
-
-func (tb *testBackend) CreateTable(name string, columns []object.Column) error {
-	if _, ok := tb.tables[name]; ok {
-		return fmt.Errorf(`relation "%s" already exists`, name)
-	}
-	tb.tables[name] = columns
-	tb.rows[name] = make([]object.Row, 0)
-	return nil
-}
-
-func (tb *testBackend) Insert(name string, row object.Row) error {
-	if _, ok := tb.tables[name]; !ok {
-		return fmt.Errorf(`relation "%s" does not exist`, name)
-	}
-	tb.rows[name] = append(tb.rows[name], row)
-	// Populate aliases
-	for i := range tb.rows[name] {
-		tb.rows[name][i].Aliases = make([]string, len(tb.tables[name]))
-		for j, column := range tb.tables[name] {
-			tb.rows[name][i].Aliases[j] = column.Name
-		}
-	}
-	return nil
-}
-
-func (tb *testBackend) Rows(name string) ([]object.Row, error) {
-	rows, ok := tb.rows[name]
-	if !ok {
-		return nil, fmt.Errorf(`relation "%s" does not exist`, name)
-	}
-	return rows, nil
-}
-
-func (tb *testBackend) Columns(name string) ([]object.Column, error) {
-	return tb.tables[name], nil
-}
-
-func newTestBackend() *testBackend {
-	return &testBackend{
-		tables: make(map[string][]object.Column),
-		rows:   make(map[string][]object.Row),
-	}
-}
-
 func TestEvalCreateTable(t *testing.T) {
 	tests := []struct {
 		input         string
@@ -443,12 +387,12 @@ func TestEvalCreateTable(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		backend := newTestBackend()
+		backend := inmemory.NewBackend()
 		evaluated := testEval(backend, tt.input)
 		if _, ok := evaluated.(*object.OK); !ok {
 			t.Fatalf("object is not OK. got=%T", evaluated)
 		}
-		columns := backend.tables[tt.tableName]
+		columns := backend.Tables[tt.tableName]
 		expectedColumns := tt.expectedTable.Columns
 		if len(columns) != len(expectedColumns) {
 			t.Fatalf("expected %d columns. got=%d", len(expectedColumns), len(columns))
@@ -502,8 +446,8 @@ func TestEvalInsert(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		backend := newTestBackend()
-		backend.tables["foo"] = []object.Column{
+		backend := inmemory.NewBackend()
+		backend.Tables["foo"] = []object.Column{
 			{Name: "a", Type: object.DataType("STRING")},
 			{Name: "b", Type: object.DataType("INTEGER")},
 			{Name: "c", Type: object.DataType("FLOAT")},
@@ -516,7 +460,7 @@ func TestEvalInsert(t *testing.T) {
 			}
 			t.Fatalf("object is not OK. got=%T", evaluated)
 		}
-		rows, ok := backend.rows["foo"]
+		rows, ok := backend.Tuples["foo"]
 		if !ok {
 			t.Fatalf("row doesn't exist")
 		}
@@ -941,15 +885,15 @@ func TestEvalSelectFrom(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		backend := newTestBackend()
+		backend := inmemory.NewBackend()
 
 		// table `foo`
-		backend.tables["foo"] = []object.Column{
+		backend.Tables["foo"] = []object.Column{
 			{Name: "a", Type: object.STRING},
 			{Name: "b", Type: object.STRING},
 			{Name: "c", Type: object.STRING},
 		}
-		backend.rows["foo"] = []object.Row{
+		backend.Tuples["foo"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "abc"},
@@ -971,10 +915,10 @@ func TestEvalSelectFrom(t *testing.T) {
 		}
 
 		// table `bar`
-		backend.tables["bar"] = []object.Column{
+		backend.Tables["bar"] = []object.Column{
 			{Name: "a", Type: object.STRING},
 		}
-		backend.rows["bar"] = []object.Row{
+		backend.Tuples["bar"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "m"},
@@ -992,10 +936,10 @@ func TestEvalSelectFrom(t *testing.T) {
 		}
 
 		// table `baz`
-		backend.tables["baz"] = []object.Column{
+		backend.Tables["baz"] = []object.Column{
 			{Name: "x", Type: object.STRING},
 		}
-		backend.rows["baz"] = []object.Row{
+		backend.Tuples["baz"] = []object.Row{
 			{
 				Values: []object.Object{
 					&object.String{Value: "x"},
