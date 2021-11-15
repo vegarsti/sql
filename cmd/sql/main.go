@@ -84,7 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 	if len(os.Args) > 2 {
-		fmt.Fprintf(os.Stderr, "usage: sql [database file]", err)
+		fmt.Fprint(os.Stderr, "usage: sql [database file]")
 		os.Exit(1)
 	}
 	var backend evaluator.Backend
