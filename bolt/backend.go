@@ -35,6 +35,7 @@ func (b *Backend) Close() error {
 	return nil
 }
 
+// CreateTable creates a Bolt bucket with the table name in the b.file Bolt file.
 func (b *Backend) CreateTable(tableName string, columns []object.Column) error {
 	// Create a bucket for this table and insert columns as JSON
 	if err := b.db.Update(func(tx *bolt.Tx) error {
@@ -61,6 +62,11 @@ func (b *Backend) CreateTable(tableName string, columns []object.Column) error {
 	return nil
 }
 
+// Insert inserts a row in the bucket for this table.
+// When a row has been inserted, we increment the bucket sequence number.
+// This number thus shows how many rows there are in the table, and is used when iterating over the rows in Backend.Rows().
+// The n'th row is stored with the byte representation of n as its key, and
+// the bytes stored contain the marshalled JSON representation of the `object.Row`.
 func (b *Backend) Insert(tableName string, row object.Row) error {
 	// Create a bucket for this table and insert columns as JSON
 	if err := b.db.Update(func(tx *bolt.Tx) error {
@@ -87,6 +93,7 @@ func (b *Backend) Insert(tableName string, row object.Row) error {
 	return nil
 }
 
+// Rows returns a slice of all the rows in the table.
 func (b *Backend) Rows(tableName string) ([]object.Row, error) {
 	var rows []object.Row
 	if err := b.db.View(func(tx *bolt.Tx) error {
@@ -102,6 +109,9 @@ func (b *Backend) Rows(tableName string) ([]object.Row, error) {
 		for i := uint64(0); i < bucket.Sequence(); i++ {
 			var row object.Row
 			row.Values = make([]object.Object, len(columns))
+			// Since row.Values is a slice of interface values, we must indicate which implementation of
+			// the interface is used. Since tables cannot change, we know that the columns of the tables
+			// are static. This means that if the 2nd value in a row must be a value of the 2nd column type.
 			for i, v := range columns {
 				switch v.Type {
 				case object.STRING:
@@ -130,8 +140,8 @@ func (b *Backend) Rows(tableName string) ([]object.Row, error) {
 	return rows, nil
 }
 
+// Columns returns the column information for this table, if it exists
 func (b *Backend) Columns(tableName string) ([]object.Column, error) {
-	// Get the columns from the bucket for this table
 	var columns []object.Column
 	if err := b.db.View(func(tx *bolt.Tx) error {
 		tableBucketName := []byte(tableName)
@@ -154,6 +164,7 @@ func (b *Backend) Columns(tableName string) ([]object.Column, error) {
 }
 
 // itob returns an 8-byte big endian representation of v.
+// We use this to generate keys for each row.
 func itob(v uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, v)
